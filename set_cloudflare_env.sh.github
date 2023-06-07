@@ -1,0 +1,18 @@
+export CLOUDFLARE_ACCOUNT_ID=""
+export CLOUDFLARE_API_TOKEN=""
+
+#check if token works
+# curl "https://api.cloudflare.com/client/v4/user/tokens/verify" \
+#      -H "Authorization: Bearer $CLOUDFLARE_ZERO_TRUST_TOKEN"
+
+#get categories
+# curl --request GET \
+# --url https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/gateway/categories \
+# --header 'Content-Type: application/json' \
+# --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN"
+
+#get content_categories for one domain
+# curl --request GET \
+#   --url https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/intel/domain?domain=google.com \
+#   --header 'Content-Type: application/json' \
+#   --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN"
