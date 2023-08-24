@@ -62,7 +62,7 @@ def override_create_df():
     domains = []
     topics = []
     scores = []
-    for entry in config.override_list.entries:
+    for entry in config.web_override_list.entries:
         # extract topic ids manually classified
         ids = entry.topics.topic_ids
         if ids == []:

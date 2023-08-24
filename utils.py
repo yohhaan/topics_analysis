@@ -1,4 +1,5 @@
 import config
+import re
 
 
 def process_domain(domain):
@@ -12,22 +13,22 @@ def process_domain(domain):
     return domain
 
 
-def check_override_list(domain):
+def check_web_override_list(domain):
     """
     Check if domain is in override_list
     """
-    for entry in config.override_list.entries:
+    for entry in config.web_override_list.entries:
         if entry.domain == domain:
             return entry.topics.topic_ids
     return None
 
 
-def ml_model_csv_header():
+def chrome_ml_model_csv_header():
     """
     Print the csv header: domain\t-2\t1...
     """
     header = "domain"
-    for topic in config.taxonomy.keys():
+    for topic in config.web_taxonomy.keys():
         header += "\t{}".format(topic)
     print(header)
 
@@ -41,7 +42,7 @@ def get_crux_ranks(edit_top6=False):
     import pandas as pd
     import re
 
-    crux_ranks = "sandbox_dependencies/topics/crux.csv"
+    crux_ranks = "sandbox_dependencies/topics_web/crux.csv"
     ranks = pd.read_csv(crux_ranks, sep=",")
     ranks["origin"] = ranks.origin.apply(
         lambda x: re.sub("https?:\/\/", "", x)

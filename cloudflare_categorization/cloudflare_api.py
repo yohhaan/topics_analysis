@@ -26,7 +26,7 @@ if __name__ == "__main__":
         """
         top = int(sys.argv[2])
         # CrUX
-        crux = pd.read_csv("sandbox_dependencies/topics/crux.csv", sep=",")
+        crux = pd.read_csv("sandbox_dependencies/topics_web/crux.csv", sep=",")
         crux = crux.head(top)
         # Regex to remove http(s)://
         crux["origin"] = crux.origin.apply(lambda x: re.sub("https?:\/\/", "", x))

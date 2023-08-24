@@ -1,19 +1,24 @@
 # Topics Analysis: Privacy and Utility Goals
 
 This repository contains the source code used in our privacy and utility
-analysis of the [Topics API]() from the [Privacy Sandbox](). With the Topics
-API, Google aims to replace third-party cookies for personalized advertising.
-Find more details about our analysis in our paper [Interest-disclosing Mechanims
-for Advertising are Privacy-*Exposing* (not Preserving)](https://arxiv.org/abs/2306.03825):
+analysis of the Topics API for the Web from the [Privacy
+Sandbox](https://privacysandbox.com/).
+
+
+## Topics API for the Web
+
+With the Topics API for the Web, Google aims to replace third-party cookies for
+personalized advertising. Find more details about our analysis in our paper
+[Interest-disclosing Mechanims for Advertising are Privacy-*Exposing* (not
+Preserving)](https://arxiv.org/abs/2306.03825):
 
 ```bibtex
-@misc{topics23_beugin,
+@inproceedings{topicsweb23_beugin,
       title={Interest-disclosing Mechanisms for Advertising are Privacy-Exposing (not Preserving)},
       author={Yohan Beugin and Patrick McDaniel},
-      year={2023},
-      eprint={2306.03825},
-      archivePrefix={arXiv},
-      primaryClass={cs.CR}
+      booktitle={Proceedings on {Privacy} {Enhancing} {Technologies} {Symposium} ({PETS})},
+      year={2024},
+      month={july},
 }
 ```
 
@@ -23,26 +28,46 @@ for Advertising are Privacy-*Exposing* (not Preserving)](https://arxiv.org/abs/2
 1. Clone this [topics_analysis](https://github.com/yohhaan/topics_analysis)
    repository and the
    [sandbox_dependencies](https://github.com/yohhaan/sandbox_dependencies)
-   submodule with:
+   submodule at once with:
+   - `git clone --recurse-submodules git@github.com:yohhaan/topics_analysis.git` (SSH)
    - `git clone --recurse-submodules
-     git@github.com:yohhaan/topics_analysis.git` (SSH)
+     https://github.com/yohhaan/topics_analysis.git` (HTTPS)
 
-     or
+A `Dockerfile` is provided under `.devcontainer/` (for direct integration with
+[VS Code](https://gist.github.com/yohhaan/b492e165b77a84d9f8299038d21ae2c9)). To
+manually build the image and deploy the Docker container, follow the
+instructions below:
 
-   - `git clone --recurse-submodules
-     https://github.com/yohhaan/topics_analysis.git` (HTTPS).
+**Requirement:** [Docker](https://www.docker.com/products/docker-desktop)
 
-2. To install software dependencies, we recommend using the provided
-`DockerFile` (under `.devcontainer/` for direct integration with [VS
-code](https://code.visualstudio.com/docs/devcontainers/containers)).
+2. Build the Docker image:
+```sh
+docker build -t topics_analysis .devcontainer/
+```
 
-3. Follow the steps in the `README` file of the `sandbox_dependencies` to
-   manually copy into the submodule the dependencies that are not fetched
-   automatically at the moment and download the rest:
-    - Manual dependencies: `model.tflite`, `override_list.pb.gz` `top-1m.csv`
-  `tranco_ID.csv`.
-    - Download other dependencies with the `./fetch_all.sh` script in the
-      submodule.
+3. Deploy a Docker container:
+```sh
+docker run --rm -it -v ${PWD}:/workspaces/topics_analysis \
+    -w /workspaces/topics_analysis \
+    --entrypoint bash topics_analysis:latest
+```
+
+Note: some of the commands to reproduce our results may take a long time to
+execute depending on the amount of resources of your machine. We recommend to
+run the above command to deploy a Docker container in a
+[`screen`](https://www.gnu.org/software/screen/) session that you can then
+detach and attach to your terminal as needed.
+
+4. Fetch the required Privacy Sandbox dependencies:
+```
+cd sandbox_dependencies
+./fetch_all.sh
+cd ..
+```
+
+5. 
+
+## Minimal working example
 
 4. Automatically classify the different lists of domains considered (see
    details below).
@@ -56,11 +81,13 @@ Structure of the `topics_analysis` repository:
 - `.devcontainer/`: folder with Dockerfile for software dependencies and
 settings for [VS code Dev
 containers](https://code.visualstudio.com/docs/devcontainers/containers).
+- `cloudflare_categorization`: folder with code to perform bulk categorization
+  of domain names with Cloudflare Domain Intelligence API.
 - `figs/`: folder where figures are saved by the analysis.
 - `output/`: folder to save several intermediary output files and processed data
   needed for future analysis.
-- `sandbox_dependencies/`: git submodule pointing to another of our
-  [repository](https://github.com/yohhaan/sandbox_dependencies) that contains
+- `sandbox_dependencies/`: git
+  [submodule](https://github.com/yohhaan/sandbox_dependencies) that contains
   some dependencies required for this project (see corresponding `README`).
 
 ---
@@ -68,17 +95,17 @@ containers](https://code.visualstudio.com/docs/devcontainers/containers).
 
 ### Manually
 
-To classify some domains individually see `./classify_domain.sh` for the
+To classify some domains individually see `./classify.sh` for the
   different options:
   - `chrome`: check in override_list (static mapping) and if not present top 5
     from ml_model (follows Colab example released by Google).
-  - `ml_model_top`: run ml_model, output only top T, where T is passed as 2nd
+  - `chrome_ml_model_top`: run ml_model, output only top T, where T is passed as 2nd
     parameter to script.
-  - `ml_model_st`: run ml_model, output categories with score >= st, where st is passed as 2nd
+  - `chrome_ml_model_st`: run ml_model, output categories with score >= st, where st is passed as 2nd
     parameter to script.
-  - `ml_model_chrome`: run ml_model with filtering strategy used in Google Chrome Beta.
-  - `ml_model_csv_header`: output csv header for ml_model_csv option.
-  - `ml_model_csv`: run ml_model directly (no check against override_list and no
+  - `chrome_ml_model`: run ml_model with filtering strategy used in Google Chrome Beta.
+  - `chrome_ml_model_csv_header`: output csv header for chrome_ml_model_csv option.
+  - `chrome_ml_model_csv`: run ml_model directly (no check against override_list and no
     filtering of output).
   - `chrome_csv_header`: output csv header for chrome_csv option.
   - `chrome_csv`: run chrome classification (first check against override list,
@@ -86,7 +113,7 @@ To classify some domains individually see `./classify_domain.sh` for the
     filtering strategy).
 
 Pass domain names to classify as last arguments, as an example, the following
-command `./classify_domain.sh chrome_csv github.com privacysandbox.com` should
+command `./classify.sh chrome_csv github.com privacysandbox.com` should
 output:
 ```
 github.com      139     1
@@ -116,16 +143,10 @@ for more details about the steps being executed. Here is a summary:
   output of ML model for utility analysis - we apply chrome filtering strategy
   later).
 
-Note: the classification could probably be further optimized if we were to
-figure out the Tokenizer used by Google during training and how to perform batch
-inference directly with the `.tflite` model released by Google (on that last
-point, one would need to take into account the label metadata file embedded in
-the `.tflite` model). The `parallel` execution is sufficient for our needs.
-
 ### Analysis of Classification
 
 - Entrypoint: `python3 analysis.py`, it reloads the `analysis_library` library
-  automatically when exiting with `CTRL+D` the interactive console so that
+  automatically when exiting with `CTRL+D` the interactive consol. That way
   modifications in `analysis_library.py` are taken into account without having
   to reload each dataset (which can take time). Exit the interactive console
   with `exit()` when you are done.
@@ -161,25 +182,7 @@ Google does in Google Chrome Beta, execute the following steps:
 ---
 ## Cloudflare Categorization
 
-We are interested in comparing the classification of the Topics API to the
-ground truth provided by the categorization returned by [Cloudflare Domain
-Intelligence
-API](https://developers.cloudflare.com/api/operations/domain-intelligence-get-multiple-domain-details),
-available through [Cloudflare Radar](https://radar.cloudflare.com/).
-
-Access to the API requires the creation of a Cloudflare account to generate an
-API token (with permission `Account: Intel - Read`) in order to query the Domain
-Intelligence API (rate limited at about 100 monthly requests).
-- Rename `set_cloudflare_env.sh.github` to `set_cloudflare_env.sh` and enter
-  your `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`.
-- Run `cloudflare_categorization.sh` to categorize domain names with Cloudflare
-  API. Some requests to the API are likely to time out, we just rerun them (see
-  script for useful commands).
-- Refer to the `analysis.py` code to compare Topics classification to ground
-  truth provided by Cloudflare categorization. This requires beforehand to
-  manually map Google's Topics to Cloudflare's categories as explained in the
-  paper. We release our manual mapping in the following file
-  `cloudflare_categories_manual_mapping_topics.json`.
+See `cloudflare-categorization` folder and corresponding `README` file.
 
 ---
 ## Subdomains Crafting

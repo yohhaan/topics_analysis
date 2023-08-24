@@ -1,5 +1,5 @@
 #!/bin/sh
-crux_path=./sandbox_dependencies/topics/crux.csv
+crux_path=./sandbox_dependencies/topics_web/crux.csv
 output_folder=output/crux
 domains_temp=$output_folder/crux.domains_temp
 domains=$output_folder/crux.domains

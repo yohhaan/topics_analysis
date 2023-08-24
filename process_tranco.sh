@@ -1,5 +1,5 @@
 #!/bin/sh
-tranco_top_1m=./sandbox_dependencies/topics/top-1m.csv
+tranco_top_1m=./sandbox_dependencies/topics_web/top-1m.csv
 output_folder=output/tranco
 domains=$output_folder/tranco.domains
 output=$output_folder/tranco_chrome.csv

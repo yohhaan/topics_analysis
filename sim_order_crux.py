@@ -7,8 +7,10 @@ import numpy as np
 
 
 def total_order_crux(offset1, offset2):
-    clouflare_path = "sandbox_dependencies/topics/cloudflare-radar-domains-top100.csv"
-    tranco_filepath = "sandbox_dependencies/topics/top-1m.csv"
+    clouflare_path = (
+        "sandbox_dependencies/topics_web/cloudflare-radar-domains-top100.csv"
+    )
+    tranco_filepath = "sandbox_dependencies/topics_web/top-1m.csv"
     ranks = utils.get_crux_ranks(True)  # edit Top6 already by passing True
     ranks = ranks[offset1:offset2]
 

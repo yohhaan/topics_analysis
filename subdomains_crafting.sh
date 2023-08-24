@@ -1,6 +1,6 @@
 #!/bin/sh
-taxonomy=./sandbox_dependencies/topics/taxonomy.md
-crux=./sandbox_dependencies/topics/crux.csv
+taxonomy=./sandbox_dependencies/topics_web/taxonomy.md
+crux=./sandbox_dependencies/topics_web/crux.csv
 top=10000
 output_folder=output/subdomains
 

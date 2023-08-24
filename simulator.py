@@ -168,9 +168,71 @@ def archive_main():
     simulator_library.plot_median_nb_genuine_retrieved(median)
 
 
+def gen_id(t1, t2, t3, t4, t5):
+    topics = np.sort([t1, t2, t3, t4, t5])
+    id = ""
+    for t in topics:
+        id += str(t) + "-"
+    return id
+
+
+def extract_stats_synthetic_datasets():
+    paths = [
+        "output/simulator/synthetic/52k_users.csv",
+        "output/simulator/synthetic/250k_users.csv",
+    ]
+
+    for path in paths:
+        df = pd.read_csv(path, sep="\t")
+        df2 = pd.concat(
+            [
+                df["t1"],
+                df["t2"],
+                df["t3"],
+                df["t4"],
+                df["t5"],
+            ]
+        ).unique()
+        print(len(df))
+        print("Nb unique topics:")
+        print(len(df2))
+        df["id"] = df.apply(lambda x: gen_id(x.t1, x.t2, x.t3, x.t4, x.t5), axis=1)
+        print("Nb unique profiles:")
+        print(df["id"].nunique())
+
+        print("====")
+
+
+def different_population_sizes(
+    filename_users="output/simulator/synthetic/1k_users.csv",
+):
+    ## MULTI-SHOT EXPERIMENT (ONE SHOT is equal to epoch 0 observed only)
+    min_nb_domains_in_top_1m = 10
+    synthetic_topics = pd.read_csv(filename_users, sep="\t")
+    synthetic_users = synthetic_topics.to_numpy()
+    nb_users = len(synthetic_users)
+    nb_epochs_total = 30
+    users = create_users(synthetic_users, nb_users)
+    noisy_topics_list = sim_utils.output_noisy_topics_traffic(min_nb_domains_in_top_1m)
+
+    simulator_library.multi_shot_denoise_generate_exp_a(
+        users, noisy_topics_list, nb_epochs_total
+    )
+    simulator_library.multi_shot_denoise_generate_exp_b(
+        users, noisy_topics_list, nb_epochs_total
+    )
+    simulator_library.multi_shot_denoise_results_exp_all_epochs_plot(
+        users, nb_epochs_total
+    )
+
+    ## RE-IDENTIFICATION
+    simulator_library.reidentification_all_epochs(users, nb_epochs_total)
+
+
 def main():
     # refer to archive_main() and corresponding functions mentioned there for
     # the commands to run the analysis
+    # extract_stats_synthetic_datasets()
 
     while True:
         try:

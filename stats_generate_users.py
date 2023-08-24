@@ -2,21 +2,12 @@ import pandas as pd
 import numpy as np
 import sys
 import random as rd
+import uuid
 
 
-def print_output_topics(nb_unique_domains, nb_user_topics, topics):
-    sorted = np.sort(topics[0:5])
-    t1 = sorted[0]
-    t2 = sorted[1]
-    t3 = sorted[2]
-    t4 = sorted[3]
-    t5 = sorted[4]
-    print(
-        "{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(
-            nb_unique_domains, nb_user_topics, t1, t2, t3, t4, t5
-        ),
-        end="",
-    )
+def print_output_domains(user_domains):
+    for domain in user_domains:
+        print("{}\n".format(domain), end="")
 
 
 if __name__ == "__main__":
@@ -54,8 +45,6 @@ if __name__ == "__main__":
             df_user = crux_chrome.query("domain in @user_domains")
             topics = df_user["topic_id"].unique()
 
-            nb_user_topics = len(topics)
-
             # add uniform topics from taxonomy if we are below 5 topics
             while len(topics) < 5:
                 t_tax = rd.randrange(1, 349 + 1)
@@ -64,13 +53,9 @@ if __name__ == "__main__":
 
             if len(topics) == 5:
                 nb_generated += 1  # do not forget to increment
-                print_output_topics(nb_unique_domains, nb_user_topics, topics)
+                print_output_domains(user_domains)
             else:
-                # more than 5 topics - we randomly sample 10 combinations
-                for i in range(10):
-                    if nb_generated >= nb_users:
-                        break
-                    else:
-                        t = np.random.choice(topics, 5, replace=False)
-                        nb_generated += 1  # do not forget to increment
-                        print_output_topics(nb_unique_domains, nb_user_topics, t)
+                # more than 5 topics - we randomly sample 10 combinations but
+                # domains stay the same
+                nb_generated += 10  # do not forget to increment
+                print_output_domains(user_domains)

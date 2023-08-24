@@ -2,4 +2,4 @@
 __pycache__/
 output/
 figs/
-set_cloudflare_env.sh
+cloudflare_categorization/set_cloudflare_env.sh

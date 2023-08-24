@@ -30,7 +30,7 @@ def taxonomy():
     """
     Output stats about the initial taxonomy and create parent child topics
     """
-    taxonomy = config.taxonomy.copy()
+    taxonomy = config.web_taxonomy.copy()
     taxonomy.pop(-2)  # pop unknown topic to recover initial taxonomy from Google
 
     subcategories = {}  # will be dict where keys are broader categories ids
@@ -385,7 +385,7 @@ def chrome_filter(
     df_top_max = (
         df.sort_values("score", ascending=False)
         .groupby("domain")
-        .head(config.max_topics)
+        .head(config.web_max_topics)
     )
     # compute sum of top scores for each domain
     df_top_scores_sum = df_top_max.groupby("domain")["score"].sum().to_frame()
@@ -393,14 +393,14 @@ def chrome_filter(
     df_top_scores_sum.rename({"score": "sum"}, axis=1, inplace=True)
     # drop if top score is less than the minimum desired
     df_top_max.drop(
-        df_top_max[df_top_max["score"] < config.min_topic_score].index, inplace=True
+        df_top_max[df_top_max["score"] < config.web_min_topic_score].index, inplace=True
     )
     # merge to add scores sum
     df_top_max = df_top_max.merge(df_top_scores_sum, on="domain", how="left")
     # extract too strong Unknown Topic
     df_too_strong_none = df_top_max[
         (df_top_max["topic_id"] == -2)
-        & (df_top_max["score"] / df_top_max["sum"] > config.min_unknown_score)
+        & (df_top_max["score"] / df_top_max["sum"] > config.web_min_unknown_score)
     ]
     # left minus join to remove domains with too strong none topic (will add
     # back later just the none topic for them)
@@ -415,7 +415,7 @@ def chrome_filter(
     df_top_max.drop(
         df_top_max[
             df_top_max["score"] / df_top_max["sum"]
-            < config.min_normalized_score_within_top_n
+            < config.web_min_normalized_score_within_top_n
         ].index,
         inplace=True,
     )
@@ -466,7 +466,9 @@ def crux_extract_sample_size_x(df, x, foldername, filename):
         .sample(3 * x)
     )
     df_extract_temp["in_override"] = df_extract_temp.domain.apply(
-        lambda x: 1 if utils.check_override_list(utils.process_domain(x)) != None else 0
+        lambda x: 1
+        if utils.check_web_override_list(utils.process_domain(x)) != None
+        else 0
     )
     sample = df_extract_temp[df_extract_temp["in_override"] == 0].head(x)
     sample.drop("in_override", inplace=True, axis=1)
@@ -519,7 +521,7 @@ def crux_verification(foldername, filename):
     for row in df.itertuples():
         os.system("clear")
         print("Domain: ", row.domain)
-        print("TOPIC:", config.taxonomy[row.topic_id])
+        print("TOPIC:", config.web_taxonomy[row.topic_id])
         print()
         print("DESCRIPTION: ", row.meta_description)
         print()
@@ -573,7 +575,7 @@ def compare_topics_to_cloudflare(
     df_crux_cloudflare,
     filename,
     ranks_bool=False,
-    ranks_filepath="sandbox_dependencies/topics/crux.csv",
+    ranks_filepath="sandbox_dependencies/topics_web/crux.csv",
     dict_path="output/cloudflare/mapping_categories.pickle",
 ):
     import pickle
@@ -690,7 +692,7 @@ def words_crafted_subdomains(
     crux_chrome_csv, words_subdomains_chrome_csv, words_targeted_csv
 ):
     # extract crux to get rank
-    crux = pd.read_csv("sandbox_dependencies/topics/crux.csv", sep=",")
+    crux = pd.read_csv("sandbox_dependencies/topics_web/crux.csv", sep=",")
     # keep only top
     crux = crux[crux["rank"] <= 10000]
     # remove http(s)://
