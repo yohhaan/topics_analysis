@@ -14,8 +14,8 @@ fi
 if [ ! -f $output ]
 then
     #Header
-    python3 process.py chrome_ml_model_csv_header >> $output
+    python3 classify.py chrome_ml_model_csv_header >> $output
     #Parallel inference - we don't mind retaining the alphabetical order so no
     #-k
-    parallel -X --bar -N 100 -a $domains -I @@ "python3 process.py chrome_ml_model_csv @@ >> $output"
+    parallel -X --bar -N 100 -a $domains -I @@ "python3 classify.py chrome_ml_model_csv @@ >> $output"
 fi

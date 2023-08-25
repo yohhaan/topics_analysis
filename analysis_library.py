@@ -220,65 +220,6 @@ def compare_to_ground_truth(
     np.save("output/" + foldername + "/" + filename + "_overlap.npy", overlap)
 
 
-def plot_confusion_matrix(
-    cm,
-    foldername="",
-    filename="",
-    log=True,
-    col_map=None,
-):
-    """
-    Plot confusion matrix passed as argument
-    """
-    plt.clf()
-    if col_map == None:
-        col_map = sns.color_palette("rocket_r", as_cmap=True)
-    if log:
-        plot = sns.heatmap(
-            cm,
-            cbar=True,
-            vmax=None,
-            vmin=None,
-            norm=SymLogNorm(linthresh=0.01),
-            cmap=col_map,
-        )
-    else:
-        plot = sns.heatmap(cm, cbar=True, cmap=col_map)
-    plot.set_xlabel("Predicted Topic")
-    plot.set_ylabel("Actual Topic")
-    plt.tight_layout()
-    savefig("figs/" + foldername + "/" + filename + "_confusion_matrix.pdf")
-
-
-def plot_subcategory_confusion_matrix(cm, foldername, filename, log, col_map=None):
-    """
-    Plot a confusion matrix based on the one passed as argument
-    But aggregating topics per categories
-    Unknown is considered its own category
-    """
-    # dict of parent with corresponding child topics
-    subcategories = load_parent_child_topics()
-    subcategories[0] = [0]  # adding unkwnown category
-
-    new_cm = []
-
-    for row in subcategories.keys():
-        row_cm = []
-        row_indices = subcategories[row]
-        for column in subcategories.keys():
-            column_indices = subcategories[column]
-            row_cm.append(
-                np.sum(
-                    cm[
-                        row_indices[0] : row_indices[-1] + 1,
-                        column_indices[0] : column_indices[-1] + 1,
-                    ]
-                )
-            )
-        new_cm.append(np.array(row_cm))
-    plot_confusion_matrix(new_cm, foldername, filename + "_categories", log, col_map)
-
-
 def results_model_ground_truth(
     df_o, foldername, filename, log1, log2, col_map1=None, col_map2=None
 ):
@@ -338,38 +279,6 @@ def results_model_ground_truth(
             "Proportion one_correct: {}\n".format(np.sum(jaccard > 0) / len(jaccard))
         )
         f.write("--------\n")
-
-    plot_confusion_matrix(cm, foldername, filename, log1, col_map1)
-    plot_subcategory_confusion_matrix(cm, foldername, filename, log2, col_map2)
-
-
-def dense_confusion_matrix(df_o, df_override, foldername, filename, log, col_map=None):
-    """
-    Plot dense confusion matrix
-    0 is considered as the unknown topic
-    """
-    df_o["topic_id"] = df_o["topic_id"].replace(-2, 0)  # replace unknown topic by 0
-    df_override["topic_id"] = df_override["topic_id"].replace(
-        -2, 0
-    )  # replace unknown topic by 0
-
-    cm = np.zeros([350, 350])
-    # extract number of topics per domain in manual list
-    df_count = df_o.groupby(["domain"])["topic_id"].nunique().reset_index()
-    for row in df_count.itertuples():
-        domain_truth = df_o[df_o.domain == row.domain]
-        domain_prediction = df_override[df_override.domain == row.domain].sort_values(
-            by=["topic_id"]
-        )
-        truth = domain_truth["topic_id"]
-        for idt in truth:
-            cm[idt] += domain_prediction["score"]
-    # replace back
-    df_o["topic_id"] = df_o["topic_id"].replace(0, -2)
-    df_override["topic_id"] = df_override["topic_id"].replace(0, -2)
-
-    np.save("output/" + foldername + "/" + filename + "_dense_confusion_matrix.npy", cm)
-    plot_confusion_matrix(cm, foldername, filename, log, col_map)
 
 
 def chrome_filter(
@@ -538,7 +447,7 @@ def crux_verification(foldername, filename):
 
 
 ### CrUX comparison Topics classification and Cloudflare categorization ###
-# after running process_cloudflare.sh and manually mapping Cloudflare categories
+# after running cloudflare_categorization.sh and manually mapping Cloudflare categories
 # to Topics run following functions
 
 
@@ -716,10 +625,6 @@ def words_crafted_subdomains(
     # targeted results
     df_words = df_words_subdomains.merge(df_words_targeted, how="left", on="domain")
     df_words["targeted"] = np.where(df_words["topic_id"] == df_words["target"], 1, 0)
-
-    # -----Top Word-----
-    # Targeted
-    # 0.3189174285714286
 
     # untargeted results
     df_words["origin"] = df_words.domain.apply(lambda x: x.split(".", 1)[1])

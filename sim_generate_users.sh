@@ -1,7 +1,7 @@
 #!/bin/sh
 output_folder=output/simulator/synthetic
-input=$output_folder/500k_users.input
-output=$output_folder/500k_users.csv
+input=$output_folder/52k_users.input
+output=$output_folder/52k_users.csv
 
 mkdir -p $output_folder
 

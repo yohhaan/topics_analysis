@@ -115,7 +115,7 @@ def crux_order_add_traffic():
     d_traffic = return_traffic_distribution()
     spl_traffic = interpolate(transform_to_dictxy(d_traffic), True, "traffic")
 
-    max_index = crux_order["index"].max()  # 991656
+    max_index = crux_order["index"].max()
     index = np.arange(1, max_index + 1, 1)
     proportion = spl_traffic(index)
     proportion[1:] = proportion[1:] - spl_traffic(index[1:] - 1)

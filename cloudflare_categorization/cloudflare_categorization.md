@@ -19,6 +19,6 @@ Intelligence API (rate limited at about 100 monthly requests).
   manual mapping in the following file
   `cloudflare_categories_manual_mapping_topics.json`.
 
-Note & Acknowledgment: We would like to thank Cloudflare for allowing us to
+**Note & Acknowledgment:** We would like to thank Cloudflare for allowing us to
 classify the top 1M most visited domains with their Domain Intelligence API by
 increasing the API rate limits of our account.

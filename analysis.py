@@ -180,7 +180,7 @@ def describe_all():
 
 
 def utility_experiments():
-    # Experiment 1
+    # E
     # Compare model performance on override list
     df_o = override_create_df()
 
@@ -200,7 +200,7 @@ def utility_experiments():
     )
     analysis_library.results_model_ground_truth(df_o, "override", "chrome", True, False)
 
-    # Experiment 2
+    # E
     # manual verification
     # extract top 385
     df_crux_chrome = pd.read_csv(crux_chrome_csv, sep="\t")
@@ -235,7 +235,7 @@ def utility_experiments():
     for r in [1000, 5000, 10000, 50000, 100000, 500000, 1000000]:
         analysis_library.describe_results_cloudflare_comparison("1M", r)
 
-    # Experiment 3
+    # E
     df_wordnet = read_classified_csv(wordnet_csv)
     # extract top word for each topic ordered by topic id : first word = unknown topic
     top = 1

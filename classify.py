@@ -1,87 +1,8 @@
 import config
+import dependencies
 import utils
 
-
-def chrome(domains, use_override=True):
-    """
-    Chrome classifier checks override list first before calling the model
-    classifier and outputting top 5 categories if domain was not present
-    """
-    for domain in domains:
-        print("Domain: ", domain)
-        processed_domain = utils.process_domain(domain)
-        topics = (
-            utils.check_web_override_list(processed_domain) if use_override else None
-        )
-        if topics != None:
-            # Domain is in override list
-            for c in topics:
-                print("{}\t".format(config.web_taxonomy[c]))
-        else:
-            # If not call the classifier
-            topics = config.web_model.classify(processed_domain)
-            cats = sorted(topics.classifications[0].categories, key=lambda x: x.score)[
-                -5:
-            ][::-1]
-            for c in cats:
-                print(
-                    "{}\t{}\t{}".format(
-                        c.score,
-                        c.category_name,
-                        config.web_taxonomy[int(c.category_name)],
-                    )
-                )
-    print("\n")
-
-
-def chrome_ml_model_top(domains, topT):
-    """
-    Runs the model classifier and print only top `topT` topics
-    """
-    for domain in domains:
-        print("Domain: ", domain)
-        processed_domain = utils.process_domain(domain)
-        topics = config.web_model.classify(processed_domain)
-        cats = sorted(topics.classifications[0].categories, key=lambda x: x.score)[
-            -topT:
-        ][::-1]
-        for c in cats:
-            print(
-                "{}\t{}\t{}".format(
-                    c.score,
-                    c.category_name,
-                    config.web_taxonomy[int(c.category_name)],
-                )
-            )
-        print("\n")
-
-
-def chrome_ml_model_st(domains, st):
-    """
-    Runs the model classifier and print only topics for which score is higher
-    than st
-    """
-    for domain in domains:
-        print("Domain: ", domain)
-        processed_domain = utils.process_domain(domain)
-        topics = config.web_model.classify(processed_domain)
-        cats = sorted(
-            topics.classifications[0].categories,
-            key=lambda x: x.score,
-            reverse=True,
-        )
-        for c in cats:
-            if c.score > st:
-                print(
-                    "{}\t{}\t{}".format(
-                        c.score,
-                        c.category_name,
-                        config.web_taxonomy[int(c.category_name)],
-                    )
-                )
-            else:
-                break  # as ordered by descending order
-        print("\n")
+import sys
 
 
 def chrome_ml_model(domains):
@@ -206,3 +127,28 @@ def chrome_csv(domains):
                     )
                 else:
                     print("{}\t{}\t{}".format(domain, -2, 1) + "\n", end="")
+
+
+if __name__ == "__main__":
+    dependencies.load_all()
+
+    if sys.argv[1] == "chrome_ml_model":
+        domains = sys.argv[2:]
+        chrome_ml_model(domains)
+
+    elif sys.argv[1] == "chrome_ml_model_csv_header":
+        utils.chrome_ml_model_csv_header()
+
+    elif sys.argv[1] == "chrome_ml_model_csv":
+        domains = sys.argv[2:]
+        chrome_ml_model_csv(domains)
+
+    elif sys.argv[1] == "chrome_csv_header":
+        utils.chrome_csv_header()
+
+    elif sys.argv[1] == "chrome_csv":
+        domains = sys.argv[2:]
+        chrome_csv(domains)
+
+    else:
+        raise ValueError("Incorrect argument passed to the function")
