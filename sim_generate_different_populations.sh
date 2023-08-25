@@ -1,5 +1,5 @@
 #!/bin/sh
-output_folder=output/simulator/synthetic
+output_folder=output_web/simulator/synthetic
 
 mkdir -p $output_folder
 

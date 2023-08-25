@@ -1,8 +1,8 @@
 #!/bin/sh
 tranco_top_1m=./sandbox_dependencies/topics_web/top-1m.csv
-output_folder=output/tranco
+output_folder=output_web/tranco
 domains=$output_folder/tranco.domains
-output=$output_folder/tranco_chrome.csv
+output=$output_folder/chrome.csv
 
 mkdir -p $output_folder
 
@@ -16,9 +16,12 @@ if [ ! -f $output ]
 then
     #Header
     python3 classify.py chrome_csv_header >> $output
-    #Parallel inference - we don't mind retaining the alphabetical order so no
-    #-k
+    #Parallel inference
     parallel -X --bar -N 1000 -a $domains -I @@ "python3 classify.py chrome_csv @@ >> $output"
 fi
 
-python3 analysis.py exp1
+if [ -f $output ]
+then
+    #Plot graphs and extract stats
+    python3 classify_analysis.py plots_and_stats $output_folder
+fi

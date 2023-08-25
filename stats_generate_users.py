@@ -20,9 +20,9 @@ if __name__ == "__main__":
     else:
         # load crux
         crux_order_traffic = pd.read_csv(
-            "output/simulator/crux_order_traffic.csv", sep="\t"
+            "output_web/simulator/crux_order_traffic.csv", sep="\t"
         )
-        crux_chrome = pd.read_csv("output/crux/crux_chrome.csv", sep="\t")
+        crux_chrome = pd.read_csv("output_web/crux/crux_chrome.csv", sep="\t")
         crux_chrome.drop(
             crux_chrome[crux_chrome["topic_id"] == -2].index, inplace=True
         )  # remove -2

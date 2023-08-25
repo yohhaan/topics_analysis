@@ -13,35 +13,28 @@ This artifact contains all of our analysis code used in our paper to evaluate
 the privacy and utility objectives of the Topics API for the Web.
 
 Our artifact allows to:
-- Classify domains into topics, exactly as the Topics API implemented in Google
-  Chrome Beta would.
-- Generate populations of any size of synthetic users with stable interests.
-- Simulate what the Topics API would return to advertisers that observe these
-  synthetic users across several epochs.
-- Evaluate how advertisers can flag and discard the noisy topics returned by the
-  API and re-identify users across different websites and epochs.
-- Evaluate how accurate the classification of the Topics API model is on the 10k
-  domains from the static mapping released by Google.
-- Perform a manual verification of the assignment of a random sample of domains
-  into topics.
-- Classify domains with the Cloudflare Domain Intelligence API and compare
-  Topics API's categorization with the one from Cloudflare.
-- Craft millions of subdomains and evaluate the possibility to abuse the Topics
-  API's classification.
-- Reproduce the results and graphs from our corresponding paper.
-
+- Classify domains into topics with the Topics API.
+- Generate arbitrarly large populations of synthetic users.
+- Simulate the Topics API results observed by advertisers
+- Evaluate if the noisy topics returned by the API can be flagged and discarded.
+- Evaluate if users can be re-identified across websites and epochs.
+- Measure the accuracy of the classification performed by the Topics API
+  (compare to ground truth for static mapping, manual verification, and
+  comparison to Cloudflare categorization)
+- Craft millions of subdomains and evaluate if the Topics API classification can
+  be influenced.
+- Reproduce the results and analysis from our paper.
 
 ### Security/Privacy Issues and Ethical Concerns
 
-Manually performing the verification of the assignment of a random sample of
-domains into topics requires our script to automatically pull the meta
-descriptions of the associated websites. We recommend using a secure VPN to hide
-the requests being made from your ISP and hide your IP from these random
-websites: the sensitivity of their content can not be guaranteed as they are
-randomly drawn from a 1M top-list. For this reason and because this manual
-verification is time-consuming, we do not expect artifact reviewers to perform
-such experiment.
-
+The only privacy issue that could appear would be when manually verifying the
+accuracy of the classification of the Topics API. This requires to automatically
+pull the meta description of a sample of websites drawn randomly from a top 1M
+top-list. As such, the sensitivity of the content (adult-only, etc.) of these
+websites can not be guaranteed and we recommend using a secure VPN to hide the
+requests from your ISP and your IP from these websites. As this manual
+verification is also time-consuming, we do not expect artifact reviewers to
+perform it.
 
 ## Basic Requirements
 
@@ -59,13 +52,16 @@ such experiment.
 
 ### Estimated Time and Storage Consumption
 
-We do not expect artifact reviewers to attempt to fully reproduce our analysis,
-as this could take several days from scratch. Instead, we specify parameters
-that allow for a quicker evaluation of our artifact along with the ones used for
-the complete analysis in the paper.
+Our analysis can be quite lengthy to fully replicate: from several hours to
+parse the millions of crafted subdomains to several days to classify the top 1M
+most visited websites with Cloudflare API.
+
+And so, while we provide the explanations to run all of our experiments, we do
+not expect artifact reviewers to execute the most time-consuming ones. Instead,
+we also provide parameters that allow for a quicker evaluation.
 
 - Time: about 2h for the quick evaluation with 8 cores/16 threads/64GB RAM.
-- Storage: 10GB of free storage should be largely sufficient.
+- Storage: 10GB of free storage should be sufficient.
 
 
 ## Environment
@@ -192,8 +188,8 @@ evaluation).
 
 
 #### Experiment 1: Domains classification by the Topics API
-- Time to execute: about 30 min for the quick evaluation | 4h+ for longer one
-- Disk space: about 2GB
+- Time to execute: about 30 min for the quick evaluation | 1h+ for longer one
+- Disk space: about 150MB for quick evaluation | about 1.2GB for  longer one
 - Result or claim: [Main Result 1: The distribution of observed topics on the
   web is
   skewed](#main-result-1-the-distribution-of-observed-topics-on-the-web-is-skewed)
@@ -209,10 +205,13 @@ the English dictionary into their corresponding topics:
   [Tranco](https://tranco-list.eu/)
 - `wordnet` (longer evaluation): English dictionary returned by WordNet
 
-Results: the results of the classifications are stored under the `output/`
-folder, figures and statistics under the `figs/` folder. Note that figures will
-likely be slightly different from the ones from the paper as you downloaded a
-newer version of the sandbox dependencies (top lists) than when originally ran.
+Results: see the corresponding folder under `output_web/` for the classification
+(`csv` files), figures, and statistics.
+
+Note: figures will likely slightly differ from the ones from the paper as you
+are evaluating against a newer version of the top lists than when we originally
+ran our analysis.
+
 
 #### Experiment 2: Noise Removal
 - Prerequisite: run experiment 1 (quick evaluation)
@@ -239,22 +238,27 @@ instructions in this documentation file [../simulator.md](../simulator.md).
 #### Experiment 4: Static Mapping Reclassification
 - Prerequisite: run experiment 1 (quick evaluation)
 - Time to execute: about 15 min (quick evaluation only)
-- Disk space: negligible
+- Disk space: less than 3MB (negligible)
 - Result or claim: [Main Result 4: The ML model outputs topics in common with
   the ground
   truth](#main-result-4-the-ml-model-outputs-topics-in-common-with-the-ground-truth)
 
 Run `./experiment4.sh` to compare the ML classification of the domains in the
-static mapping to the manual annotations from Google. 
+static mapping to the manual annotations from Google.
 
-Results: the statistics (`chrome_comparison_stats.txt` and
-`same_nb_as_o_comparison_stats.txt`) will be saved to the `output/override`
-folder, they can directly be compared to the results in Table 4 of our paper.
+Results: see folder `output_web/static` for the results about the comparison for
+both the two filtering strategies discussed in the paper:
+`same_nb_as_static_comparison_stats.txt` and
+`chrome_filtering_comparison_stats.txt`. They can directly be compared to the
+results in Table 4 of our paper.
+
+Note: this steps extracts some statistics about the static mapping annotated by
+Google in the `output_web/static` folder.
 
 #### Experiment 5: Crafting Subdomains
 - Prerequisite: run experiment 1 (quick evaluation)
-- Time to execute: about 3 min for the quick evaluation | 2h+ for longer one
-- Disk space: about 50MB
+- Time to execute: about 2 min for the quick evaluation | 2h+ for longer one
+- Disk space: about 10MB for quick evaluation | about 50MB for longer one
 - Result or claim: [Main Result 5: Publishers can influence the classification
   of their
   websites](#main-result-5-publishers-can-influence-the-classification-of-their-websites)
@@ -265,13 +269,15 @@ each topic the word from WordNet classified with most confidence to that topic,
 and craft for each of the top most visited websites from CrUX all the
 corresponding subdomains that we classify with the Topics API.
 
-For a quick evaluation, we provide the list `taxonomy.words` of top word for
-each topic, otherwise, experiment 1 must be run in longer evaluation mode to
-classify WordNet.
+The script automatically detects if WordNet was classified during experiment 1
+(longer evaluation). If so, we can extract the list of top word for each topic,
+if not (quicker evaluation), we use the provided file
+`petsymposium-artifact2024.1/taxonomy.words`.
 
-Results: a figure similar to Figure 6 from our paper is saved at the following
-path: `figs/subdomains/words_targeted_untargeted_success.pdf`.
-
+Results: see folder `output/crafted_subdomains` for the results of the
+classification of these crafted subdomain: `targeted_untargeted_stats.txt` and
+`targeted_untargeted_success.pdf`. You should get a figure similar to Figure 6
+from our paper, note that to replicate it you need to run the longer evaluation.
 
 ## Limitations
 

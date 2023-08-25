@@ -1,6 +1,6 @@
 #!/bin/bash
 top=1000000
-output_folder=../output/cloudflare
+output_folder=../output_web/cloudflare
 domains=$output_folder/cloudflare.domains
 output=$output_folder/cloudflare.csv
 
@@ -22,6 +22,6 @@ then
     parallel -X -N 25 --bar --delay 10 --halt soon,fail=300 -a $domains -I @@ "python3 cloudflare_api.py api_request @@ >> $output"
     #manually rerun the domain names that have failed because of API error
     #useful commands for that for future reference:
-    # cat output/cloudflare/cloudflare.csv | grep error > temp
-    # sed -i '/\terror/d' output/cloudflare/cloudflare.csv
+    # cat output_web/cloudflare/cloudflare.csv | grep error > temp
+    # sed -i '/\terror/d' output_web/cloudflare/cloudflare.csv
 fi

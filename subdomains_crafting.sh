@@ -1,12 +1,16 @@
 #!/bin/sh
 taxonomy=./sandbox_dependencies/topics_web/taxonomy.md
 crux=./sandbox_dependencies/topics_web/crux.csv
-output_folder=output/subdomains
+output_folder=output_web/crafted_subdomains
 
 words=$output_folder/taxonomy.words
 words_domains=$output_folder/words_subdomains.domains
 words_truth=$output_folder/words_subdomains_targeted.csv
 words_output=$output_folder/words_subdomains.csv
+
+crux_classified_path=output_web/crux/chrome.csv
+results_path=$output_folder/words_results.csv
+
 
 mkdir -p $output_folder
 
@@ -17,7 +21,7 @@ else
     top=$1
     if [ ! -f $words ]
     then
-        python3 subdomains.py extract $words
+        echo "Words classified with highest confidence for each topic need to be extracted before pursuing"
     elif [ ! -f $words_domains ]
     then
         python3 subdomains.py create $crux $top $words $words_domains $words_truth
@@ -31,7 +35,8 @@ else
         parallel -X --bar -N 1000 -a $words_domains -I @@ "python3 classify.py chrome_csv @@ >> $words_output"
     fi
 
-    python3 subdomains.py results
+    #extract results
+    python3 subdomains.py results $crux_classified_path $words_output $words_truth $results_path $output_folder
 fi
 
 

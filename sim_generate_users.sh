@@ -1,5 +1,5 @@
 #!/bin/sh
-output_folder=output/simulator/synthetic
+output_folder=output_web/simulator/synthetic
 input=$output_folder/52k_users.input
 output=$output_folder/52k_users.csv
 

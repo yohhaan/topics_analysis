@@ -121,7 +121,7 @@ class StableUser:
 def archive_main():
     """Archive of commands ran"""
     ## ROC CURVE EXPERIMENT
-    filename_users = "output/simulator/synthetic/52k_users.csv"
+    filename_users = "output_web/simulator/synthetic/52k_users.csv"
     roc_thresholds = [0, 1, 2, 5, 10, 20, 50, 100, 500, 1000]
     roc_labels = ["0", "1", "2", "5", "10", "20", "50", "100", "500", "1k"]
     # Load data
@@ -132,7 +132,7 @@ def archive_main():
     simulator_library.one_shot_denoise_roc_curve(roc_thresholds, roc_labels, users)
 
     ## MULTI-SHOT EXPERIMENT (ONE SHOT is equal to epoch 0 observed only)
-    filename_users = "output/simulator/synthetic/250k_users.csv"
+    filename_users = "output_web/simulator/synthetic/250k_users.csv"
     min_nb_domains_in_top_1m = 10
     synthetic_topics = pd.read_csv(filename_users, sep="\t")
     synthetic_users = synthetic_topics.to_numpy()
@@ -178,8 +178,8 @@ def gen_id(t1, t2, t3, t4, t5):
 
 def extract_stats_synthetic_datasets():
     paths = [
-        "output/simulator/synthetic/52k_users.csv",
-        "output/simulator/synthetic/250k_users.csv",
+        "output_web/simulator/synthetic/52k_users.csv",
+        "output_web/simulator/synthetic/250k_users.csv",
     ]
 
     for path in paths:
@@ -204,7 +204,7 @@ def extract_stats_synthetic_datasets():
 
 
 def different_population_sizes(
-    filename_users="output/simulator/synthetic/1k_users.csv",
+    filename_users="output_web/simulator/synthetic/1k_users.csv",
 ):
     ## MULTI-SHOT EXPERIMENT (ONE SHOT is equal to epoch 0 observed only)
     min_nb_domains_in_top_1m = 10

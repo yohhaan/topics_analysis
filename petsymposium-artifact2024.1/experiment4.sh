@@ -1,8 +1,8 @@
 #!/bin/sh
 
-#No longer eval version
-
+static_mapping_folder=output_web/static
+override_folder=output_web/override
 # Move to root of git repository
 cd ..
-
-python3 classify_analysis.py override_compare
+mkdir -p $static_mapping_folder
+python3 classify_analysis.py compare_override_to_static $override_folder $static_mapping_folder

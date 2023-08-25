@@ -1,4 +1,5 @@
 import analysis_library
+import config
 
 import pandas as pd
 import re
@@ -30,22 +31,8 @@ def subdomains_create_files(
                 )  # crafted domain with targeted id
 
 
-def read_classified_csv(filename):
-    """
-    Read csv classified by model (with output for 350 topics)
-    """
-    # specify name of columns
-    df = pd.read_csv(filename, sep="\t")
-    column_names = df.columns
-    df_unpivot = pd.melt(df, id_vars="domain", value_vars=column_names[1:])
-    df_unpivot.columns = ["domain", "topic_id", "score"]
-    df_unpivot["topic_id"] = df_unpivot["topic_id"].astype("int")
-    return df_unpivot
-
-
-def extract_top_word(output_path):
-    wordnet_csv = "output/wordnet/wordnet.csv"
-    df_wordnet = read_classified_csv(wordnet_csv)
+def extract_top_word(wordnet_path, output_path):
+    df_wordnet = analysis_library.read_classified_csv(wordnet_path)
     # extract top word for each topic ordered by topic id : first word = unknown topic
     top = 1
     df_extract = (
@@ -65,13 +52,14 @@ def extract_top_word(output_path):
 if __name__ == "__main__":
     if sys.argv[1] == "extract":
         # check correct number of arguments has been passed
-        if len(sys.argv) != 3:
+        if len(sys.argv) != 4:
             raise ValueError(
-                "Wrong number of arguments passed to script, must be: extract, path_topics.domains,"
+                "Wrong number of arguments passed to script, must be: extract, wordnet_path, path_topics.domains,"
             )
         else:
-            output_path = sys.argv[2]
-            extract_top_word(output_path)
+            wordnet_path = sys.argv[2]
+            output_path = sys.argv[3]
+            extract_top_word(wordnet_path, output_path)
 
     elif sys.argv[1] == "create":
         # check correct number of arguments has been passed
@@ -94,14 +82,16 @@ if __name__ == "__main__":
                 path_adv_targeted,
             )
     elif sys.argv[1] == "results":
-        chrome = "_chrome"
-        csv = ".csv"
-        crux = "output/crux/crux"
-        words_subdomains = "output/subdomains/words_subdomains"
-        crux_chrome_csv = crux + chrome + csv
-        words_subdomains_chrome_csv = words_subdomains + csv
-        words_targeted_csv = words_subdomains + "_targeted" + csv
+        crux_path = sys.argv[2]
+        words_subdomains_path = sys.argv[3]
+        words_targeted_path = sys.argv[4]
+        output_results_path = sys.argv[5]
+        output_folder = sys.argv[6]
+
         analysis_library.words_crafted_subdomains(
-            crux_chrome_csv, words_subdomains_chrome_csv, words_targeted_csv
+            crux_path,
+            words_subdomains_path,
+            words_targeted_path,
+            output_results_path,
         )
-        analysis_library.plot_crafted_subdomains("output/subdomains/words_results.csv")
+        analysis_library.plot_crafted_subdomains(output_results_path, output_folder)

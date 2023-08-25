@@ -5,7 +5,7 @@ Google does in Google Chrome Beta, execute the following steps:
 
 - Run `./validation_filtering.sh`, this will extract 1000 words from Wordnet and
   classify them with Topics.
-- File `output/validation/validation.domains` contains the 1000 words randomly
+- File `output_web/validation/validation.domains` contains the 1000 words randomly
   sampled, copy-paste this list in the input box of the Topics model shipped
   with Google Chrome Beta:
   - Install Google Chrome Beta.
@@ -13,7 +13,7 @@ Google does in Google Chrome Beta, execute the following steps:
   - Visit `chrome://topics-internals` to run inference.
 - Run the classification in Google Chrome Beta and select the output: copy and
   paste the table that is `\tab` separated in file
-  `output/validation/validation.beta`.
+  `output_web/validation/validation.beta`.
 - In the analysis code (`analysis.py`), uncomment the code calling the function
   `validation_parameters()` to validate parameters, it returns correct and
   incorrect domain names sets. Incorrect sets should be empty, but in practice

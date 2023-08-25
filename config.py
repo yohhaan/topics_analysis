@@ -14,3 +14,9 @@ global web_min_topic_score
 web_min_topic_score = 0.01
 global webmin_normalized_score_within_top_n
 web_min_normalized_score_within_top_n = 0.25
+
+# Extensions used
+global chrome_file
+chrome_file = "/chrome.csv"
+global chrome_ml_model_file
+chrome_ml_model_file = "/chrome_ml_model.csv"

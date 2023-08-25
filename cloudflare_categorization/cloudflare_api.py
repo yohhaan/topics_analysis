@@ -31,7 +31,7 @@ if __name__ == "__main__":
         # Regex to remove http(s)://
         crux["origin"] = crux.origin.apply(lambda x: re.sub("https?:\/\/", "", x))
         crux.origin.to_csv(
-            "output/cloudflare/crux_top" + str(top) + ".domains",
+            "output_web/cloudflare/crux_top" + str(top) + ".domains",
             index=False,
             header=False,
         )

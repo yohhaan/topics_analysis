@@ -79,7 +79,7 @@ def total_order_crux(offset1, offset2):
     ranks.drop("size_tld", axis=1, inplace=True)
     ranks.sort_values(by=["rank", "cloudflarerank", "trancorank"], inplace=True)
     ranks.to_csv(
-        "output/simulator/crux_order/crux_total_order_{}_{}.csv".format(
+        "output_web/simulator/crux_order/crux_total_order_{}_{}.csv".format(
             offset1, offset2
         ),
         index=False,
@@ -87,13 +87,13 @@ def total_order_crux(offset1, offset2):
 
 
 def merge_csv(n):
-    output_path = "output/simulator/crux_order/crux_total_order_{}_{}.csv"
+    output_path = "output_web/simulator/crux_order/crux_total_order_{}_{}.csv"
     crux_order = pd.read_csv(output_path.format(0, n))
     for i in range(15):
         crux_temp = pd.read_csv(output_path.format(n * (i + 1), n * (i + 2)))
         crux_order = pd.concat([crux_order, crux_temp])
     crux_order.sort_values(by=["rank", "cloudflarerank", "trancorank"], inplace=True)
-    crux_order.to_csv("output/simulator/crux_total_order.csv", sep="\t")
+    crux_order.to_csv("output_web/simulator/crux_total_order.csv", sep="\t")
 
 
 if __name__ == "__main__":

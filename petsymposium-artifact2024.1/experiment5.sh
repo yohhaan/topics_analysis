@@ -1,22 +1,33 @@
 #!/bin/sh
 
-# If we want to go for the complete reproduction of the analysis
-longer_eval=false
-longer_evaluation
-
-# Move to root of git repository
-
+# To completely reproduce the analysis of the paper
+longer_evaluation=false
 
 if [ "$longer_evaluation" = true ]
 then
     top=10000
 else
     top=100
-    #Quick eval and we do not have the Wordnet classification to extract the word classified with highest confidence for each topic, so here it is.
-    mkdir -p ../output/subdomains
-    cp taxonomy.words ../output/subdomains/taxonomy.words
 fi
 
+# Move to root of git repository
 cd ..
-./subdomains_crafting.sh $top
+#Note: need to delete and recreate the folder between runs of experiment5 to
+#take into account the possibility to switch from quick to long evaluation
+rm -r output_web/crafted_subdomains
+mkdir -p output_web/crafted_subdomains
 
+# Check if WordNet was classified during experiment 1, if so, extract word
+# classified with highest confideence for each topic. If not we use the provided
+# file for quick evaluation
+wordnet_path=output_web/wordnet/chrome_ml_model.csv
+word_output_path=output_web/crafted_subdomains/taxonomy.words
+
+if [ ! -f $wordnet_path ]
+then
+    cp petsymposium-artifact2024.1/taxonomy.words $word_output_path
+else
+    python3 subdomains.py extract $wordnet_path $word_output_path
+fi
+
+./subdomains_crafting.sh $top

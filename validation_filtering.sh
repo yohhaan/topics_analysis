@@ -1,5 +1,5 @@
 #!/bin/sh
-output_folder=output/validation
+output_folder=output_web/validation
 domains=$output_folder/validation.domains
 output=$output_folder/validation_chrome.csv
 wordnet_path=./sandbox_dependencies/utils/wordnet/wordnet.words

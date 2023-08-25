@@ -1,4 +1,5 @@
 import config
+import dependencies
 
 from matplotlib.colors import SymLogNorm
 import matplotlib.pyplot as plt
@@ -25,50 +26,57 @@ def savefig(path, size=[4, 3]):
     plt.clf()
 
 
-### TOPICS DISTRIBUTION ###
-def taxonomy():
+def override_create_df():
     """
-    Output stats about the initial taxonomy and create parent child topics
+    Create Pandas Dataframe of override list
     """
-    taxonomy = config.web_taxonomy.copy()
-    taxonomy.pop(-2)  # pop unknown topic to recover initial taxonomy from Google
-
-    subcategories = {}  # will be dict where keys are broader categories ids
-    for id in taxonomy.keys():  # works because alphabetically ordered in taxonomy
-        is_sub = False
-        for cat in subcategories.keys():
-            if taxonomy[cat] in taxonomy[id]:
-                subcategories[cat].append(id)
-                is_sub = True
-                break
-        if not (is_sub):
-            subcategories[id] = [id]
-
-    # save to disk dict as .pickle
-    with open("output/parent_child_topics", "wb") as output:
-        pickle.dump(subcategories, output, protocol=pickle.HIGHEST_PROTOCOL)
-
-    parent = [re.sub("&", "\&", taxonomy[id]) for id in subcategories.keys()]
-    nb_topics = [len(v) for v in subcategories.values()]
-
-    df = pd.DataFrame({"Parent category": parent, "Number of topics": nb_topics})
-    # latex table
-    with open("figs/taxonomy_table.tex", "w") as f:
-        f.write(
-            df.style.hide(axis="index").to_latex(
-                hrules=True,
-                position="!ht",
-                column_format="lc",
-                caption="Distribution of topics in initial taxonomy; number of topics (including parent topic) per parent category",
-            )
-        )
-    with open("figs/taxonomy_stats.txt", "w") as f:
-        f.write("----TAXONOMY----\n")
-        f.write("size without unknown topic: {}\n".format(len(taxonomy)))
-        f.write("Stats about parent topics:\n{}\n".format(df.describe()))
+    domains = []
+    topics = []
+    scores = []
+    for entry in config.web_override_list.entries:
+        # extract topic ids manually classified
+        ids = entry.topics.topic_ids
+        if ids == []:
+            # empty
+            domains.append(entry.domain)
+            topics.append(-2)  # -2 means unknown/no topic id, likely sensitive
+            scores.append(1)  # manually annotated
+        else:
+            for id in ids:
+                domains.append(entry.domain)
+                topics.append(id)
+                scores.append(1)  # manually annotated, we assume score equal to 1
+    df_override = pd.DataFrame({"domain": domains, "topic_id": topics, "score": scores})
+    return df_override
 
 
-def histplot_topics_per_domain(df, foldername, filename):
+def read_classified_csv(filename):
+    """
+    Read csv classified by model (with output for 350 topics)
+    """
+    # specify name of columns
+    df = pd.read_csv(filename, sep="\t")
+    column_names = df.columns
+    df_unpivot = pd.melt(df, id_vars="domain", value_vars=column_names[1:])
+    df_unpivot.columns = ["domain", "topic_id", "score"]
+    df_unpivot["topic_id"] = df_unpivot["topic_id"].astype("int")
+    return df_unpivot
+
+
+def read_chrome_csv(filename):
+    """
+    Read csv classified by model with chrome filtering strategy already applied
+    """
+    df = pd.read_csv(
+        filename,
+        sep="\t",
+        dtype={"domain": str, "topic_id": int, "score": float},
+    )
+
+    return df
+
+
+def histplot_topics_per_domain(df, output_folder):
     """
     Hisplot of domains count binned by number of topics individually assigned to
     domain
@@ -86,11 +94,11 @@ def histplot_topics_per_domain(df, foldername, filename):
     plot.bar_label(plot.containers[0])
     plot.set(xlabel="Number of topic(s) per individual domain", ylabel="Domains count")
     plt.tight_layout()
-    savefig("figs/" + foldername + "/" + filename + "_histplot_topics_per_domain.pdf")
+    savefig(output_folder + "/histplot_topics_per_domain.pdf")
     return data
 
 
-def cdf_histplot_domains_per_topic(df, foldername, filename):
+def cdf_histplot_domains_per_topic(df, output_folder):
     """
     Histplot of topics count binned per number of domain(s) for each topic
     Ignore Unknown topic
@@ -133,32 +141,20 @@ def cdf_histplot_domains_per_topic(df, foldername, filename):
     plot.set_ylim([0, 350])
     plot.set_xticks(bins, bins_labels)
     plt.tight_layout()
-    savefig(
-        "figs/" + foldername + "/" + filename + "_cdf_histplot_domains_per_topic.pdf"
-    )
+    savefig(output_folder + "/cdf_histplot_domains_per_topic.pdf")
     return data
 
 
-def graph_describe_all(df, foldername, filename):
-    data1 = histplot_topics_per_domain(df, foldername, filename)
-    data2 = cdf_histplot_domains_per_topic(df, foldername, filename)
-    with open("figs/" + foldername + "/" + filename + "_stats.txt", "w") as f:
+def graph_describe_all(df, output_folder):
+    data1 = histplot_topics_per_domain(df, output_folder)
+    data2 = cdf_histplot_domains_per_topic(df, output_folder)
+    with open(output_folder + "/stats.txt", "w") as f:
         f.write("Stats about topics per domain:\n {} \n".format(data1.describe()))
         f.write("Stats about domains per topic:\n {} \n".format(data2.describe()))
 
 
-### COMPARISON - MODEL ACCURACY ###
-def load_parent_child_topics():
-    """
-    Extract mapping parent to child topics from pickle saved to disk
-    """
-    with open("output/parent_child_topics.pickle", "rb") as f:
-        subcategories = pickle.load(f)
-    return subcategories
-
-
 def compare_to_ground_truth(
-    df_truth, df_predicted, foldername, filename, keep_same_nb=True
+    df_truth, df_predicted, output_folder, filename, keep_same_nb=True
 ):
     """
     Compare ground truth (manually annotated 10k) to prediction, keeping same
@@ -166,6 +162,7 @@ def compare_to_ground_truth(
     that prediction has already been filtered out and we treat it directly.
     0 is considered as the unknown topic.
     """
+
     # replace unknown topic by 0
     df_truth["topic_id"] = df_truth["topic_id"].replace(-2, 0)
     df_predicted["topic_id"] = df_predicted["topic_id"].replace(-2, 0)
@@ -214,23 +211,17 @@ def compare_to_ground_truth(
     df_truth["topic_id"] = df_truth["topic_id"].replace(0, -2)
     df_predicted["topic_id"] = df_predicted["topic_id"].replace(0, -2)
     # save for future analysis or reuse
-    np.save("output/" + foldername + "/" + filename + "_confusion_matrix.npy", cm)
-    np.save("output/" + foldername + "/" + filename + "_dice.npy", dice)
-    np.save("output/" + foldername + "/" + filename + "_jaccard.npy", jaccard)
-    np.save("output/" + foldername + "/" + filename + "_overlap.npy", overlap)
+    np.save(output_folder + "/" + filename + "_confusion_matrix.npy", cm)
+    np.save(output_folder + "/" + filename + "_dice.npy", dice)
+    np.save(output_folder + "/" + filename + "_jaccard.npy", jaccard)
+    np.save(output_folder + "/" + filename + "_overlap.npy", overlap)
 
 
-def results_model_ground_truth(
-    df_o, foldername, filename, log1, log2, col_map1=None, col_map2=None
-):
-    cm = np.load("output/" + foldername + "/" + filename + "_confusion_matrix.npy")
-    dice = np.load("output/" + foldername + "/" + filename + "_dice.npy").flatten()
-    jaccard = np.load(
-        "output/" + foldername + "/" + filename + "_jaccard.npy"
-    ).flatten()
-    overlap = np.load(
-        "output/" + foldername + "/" + filename + "_overlap.npy"
-    ).flatten()
+def results_model_ground_truth(df_o, output_folder, filename):
+    cm = np.load(output_folder + "/" + filename + "_confusion_matrix.npy")
+    dice = np.load(output_folder + "/" + filename + "_dice.npy").flatten()
+    jaccard = np.load(output_folder + "/" + filename + "_jaccard.npy").flatten()
+    overlap = np.load(output_folder + "/" + filename + "_overlap.npy").flatten()
 
     n = 350
     N_domains = len(df_o)
@@ -251,10 +242,8 @@ def results_model_ground_truth(
     balanced_accuracy = np.sum(topics_accuracy) / n
     weighted_balanced_accuracy = np.dot(weights, topics_accuracy) / (n * sum(weights))
 
-    with open(
-        "figs/" + foldername + "/" + filename + "_comparison_stats.txt", "w"
-    ) as f:
-        f.write("----{} STATS {}----\n".format(foldername, filename))
+    with open(output_folder + "/" + filename + "_comparison_stats.txt", "w") as f:
+        f.write("----STATS {}----\n".format(filename))
         f.write("Accuracy is: {}\n".format(accuracy))
         f.write("Balanced Accuracy is: {}\n".format(balanced_accuracy))
         f.write(
@@ -279,6 +268,44 @@ def results_model_ground_truth(
             "Proportion one_correct: {}\n".format(np.sum(jaccard > 0) / len(jaccard))
         )
         f.write("--------\n")
+
+
+def taxonomy(output_folder="output_web"):
+    """
+    Output stats about the initial taxonomy
+    """
+    taxonomy = config.web_taxonomy.copy()
+    taxonomy.pop(-2)  # pop unknown topic to recover initial taxonomy from Google
+
+    subcategories = {}  # will be dict where keys are broader categories ids
+    for id in taxonomy.keys():  # works because alphabetically ordered in taxonomy
+        is_sub = False
+        for cat in subcategories.keys():
+            if taxonomy[cat] in taxonomy[id]:
+                subcategories[cat].append(id)
+                is_sub = True
+                break
+        if not (is_sub):
+            subcategories[id] = [id]
+
+    parent = [re.sub("&", "\&", taxonomy[id]) for id in subcategories.keys()]
+    nb_topics = [len(v) for v in subcategories.values()]
+
+    df = pd.DataFrame({"Parent category": parent, "Number of topics": nb_topics})
+    # latex table
+    with open(output_folder + "/taxonomy_table.tex", "w") as f:
+        f.write(
+            df.style.hide(axis="index").to_latex(
+                hrules=True,
+                position="!ht",
+                column_format="lc",
+                caption="Distribution of topics in initial taxonomy; number of topics (including parent topic) per parent category",
+            )
+        )
+    with open(output_folder + "/taxonomy_stats.txt", "w") as f:
+        f.write("----TAXONOMY----\n")
+        f.write("size without unknown topic: {}\n".format(len(taxonomy)))
+        f.write("Stats about parent topics:\n{}\n".format(df.describe()))
 
 
 def chrome_filter(
@@ -341,8 +368,12 @@ def chrome_filter(
     # reset index
     df_top_max.reset_index(drop=True, inplace=True)
     if filename != "":
-        df_top_max.to_csv(filename, sep="\t")
+        df_top_max.to_csv(filename, sep="\t", index=False)
     return df_top_max
+
+
+###############################
+###############################
 
 
 ### CrUX manual verification ###
@@ -357,7 +388,7 @@ def extract_sample_size_x(df, x, foldername, filename):
         .sample(x)
     )
     sample.to_csv(
-        "output/" + foldername + "/" + filename + "sample_size_" + str(x) + ".csv",
+        "output_web/" + foldername + "/" + filename + "sample_size_" + str(x) + ".csv",
         sep="\t",
     )
 
@@ -382,18 +413,20 @@ def crux_extract_sample_size_x(df, x, foldername, filename):
     sample = df_extract_temp[df_extract_temp["in_override"] == 0].head(x)
     sample.drop("in_override", inplace=True, axis=1)
 
-    output_path = "output/" + foldername + "/" + filename + "_sample.jsonl"
+    output_path = "output_web/" + foldername + "/" + filename + "_sample.jsonl"
     with open(output_path, "w") as f:
         f.write(sample.to_json(orient="records", lines=True, force_ascii=False))
 
 
 def crux_augment_with_meta_description(foldername, filename):
-    input_file = "output/" + foldername + "/" + filename + "_sample.jsonl"
+    input_file = "output_web/" + foldername + "/" + filename + "_sample.jsonl"
     df = pd.read_json(input_file, orient="records", lines=True)
 
     df["meta_description"] = df.domain.apply(lambda x: get_meta_description(x))
 
-    output_path = "output/" + foldername + "/" + filename + "_augmented_sample.jsonl"
+    output_path = (
+        "output_web/" + foldername + "/" + filename + "_augmented_sample.jsonl"
+    )
     with open(output_path, "w") as f:
         f.write(df.to_json(orient="records", lines=True, force_ascii=False))
 
@@ -422,8 +455,8 @@ def crux_verification(foldername, filename):
     Output: .jsonl file with verification score: 3 = correct, 2 = somewhat
     related, 1 = incorrect.
     """
-    input_file = "output/" + foldername + "/" + filename + "_augmented_sample.jsonl"
-    output_file = "output/" + foldername + "/" + filename + "_verified.jsonl"
+    input_file = "output_web/" + foldername + "/" + filename + "_augmented_sample.jsonl"
+    output_file = "output_web/" + foldername + "/" + filename + "_verified.jsonl"
 
     df = pd.read_json(input_file, orient="records", lines=True)
 
@@ -453,7 +486,7 @@ def crux_verification(foldername, filename):
 
 def parse_cloudflare_topics_mapping(
     mapping_path="cloudflare_categories_manual_mapping_topics.json",
-    output_dict_path="output/cloudflare/mapping_categories.pickle",
+    output_dict_path="output_web/cloudflare/mapping_categories.pickle",
 ):
     import json
     import pickle
@@ -485,7 +518,7 @@ def compare_topics_to_cloudflare(
     filename,
     ranks_bool=False,
     ranks_filepath="sandbox_dependencies/topics_web/crux.csv",
-    dict_path="output/cloudflare/mapping_categories.pickle",
+    dict_path="output_web/cloudflare/mapping_categories.pickle",
 ):
     import pickle
     import re
@@ -544,12 +577,12 @@ def compare_topics_to_cloudflare(
         overlap[rank].append(len(inter) / len(topics_tids))
 
     with open(
-        "output/cloudflare/result_intersection_" + filename + ".pickle", "wb"
+        "output_web/cloudflare/result_intersection_" + filename + ".pickle", "wb"
     ) as output:
         pickle.dump(intersection, output, protocol=pickle.HIGHEST_PROTOCOL)
 
     with open(
-        "output/cloudflare/result_overlap_" + filename + ".pickle", "wb"
+        "output_web/cloudflare/result_overlap_" + filename + ".pickle", "wb"
     ) as output:
         pickle.dump(overlap, output, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -558,10 +591,12 @@ def describe_results_cloudflare_comparison(filename, rank="no_rank"):
     import pickle
 
     with open(
-        "output/cloudflare/result_intersection_" + filename + ".pickle", "rb"
+        "output_web/cloudflare/result_intersection_" + filename + ".pickle", "rb"
     ) as f:
         intersection = pickle.load(f)
-    with open("output/cloudflare/result_overlap_" + filename + ".pickle", "rb") as f:
+    with open(
+        "output_web/cloudflare/result_overlap_" + filename + ".pickle", "rb"
+    ) as f:
         overlap = pickle.load(f)
 
     if rank != "no_rank":
@@ -598,7 +633,10 @@ def describe_results_cloudflare_comparison(filename, rank="no_rank"):
 
 ### Crafting Subdomains ###
 def words_crafted_subdomains(
-    crux_chrome_csv, words_subdomains_chrome_csv, words_targeted_csv
+    crux_chrome_csv,
+    words_subdomains_chrome_csv,
+    words_targeted_csv,
+    output_path_results,
 ):
     # extract crux to get rank
     crux = pd.read_csv("sandbox_dependencies/topics_web/crux.csv", sep=",")
@@ -614,8 +652,6 @@ def words_crafted_subdomains(
     ).query('_merge == "both"')
     df_crux_chrome.drop("_merge", axis=1, inplace=True)
 
-    # Top word for each topic
-    print("-----Top Word-----")
     df_words_subdomains = pd.read_csv(words_subdomains_chrome_csv, sep="\t")
     df_words_subdomains.drop_duplicates(inplace=True)
     df_words_subdomains["topic_id"].replace(-2, 0, inplace=True)
@@ -633,48 +669,48 @@ def words_crafted_subdomains(
         not in df_crux_chrome[df_crux_chrome["domain"] == x["origin"]]["topic_id"],
         axis=1,
     )
-    df_words.to_csv("output/subdomains/words_results.csv", sep="\t")
+    df_words.to_csv(output_path_results, sep="\t")
 
 
-def plot_crafted_subdomains(filename="output/subdomains/words_results.csv"):
+def plot_crafted_subdomains(output_path_results, output_folder):
     import matplotlib.pyplot as plt
     import seaborn as sns
 
     sns.set_theme(style="darkgrid")
 
-    df = pd.read_csv(filename, sep="\t")
-    filename = "words"
+    df = pd.read_csv(output_path_results, sep="\t")
 
     df.drop("Unnamed: 0", axis=1, inplace=True)
     df.drop_duplicates(inplace=True)
 
-    print("-----{}-----".format(filename))
-    print("Targeted")
-    print(df["targeted"].sum() / df["domain"].nunique())
-    print("Untargeted")
-    print(
-        np.sum(df.groupby(["domain", "target"])["untargeted"].sum() > 0)
-        / df["domain"].nunique()
-    )
+    with open(output_folder + "/targeted_untargeted_stats.txt", "w") as f:
+        f.write("Targeted: {}\n".format(df["targeted"].sum() / df["domain"].nunique()))
+        f.write(
+            "Untargeted: {}\n".format(
+                np.sum(df.groupby(["domain", "target"])["untargeted"].sum() > 0)
+                / df["domain"].nunique()
+            )
+        )
 
-    # extract dataframes for plotting
-    df_data = pd.DataFrame(
-        {"successes": df.groupby("origin")["targeted"].sum(), "type": "Targeted"}
-    )
-    print("---targeted---")
-    print(df_data["successes"].describe())
-    df_temp = (
-        df.groupby(["origin", "domain", "target"])["untargeted"].sum().reset_index()
-    )
-    df_temp["untargeted_bis"] = df_temp["untargeted"] > 0
-    df_untargeted = pd.DataFrame(
-        {
-            "successes": df_temp.groupby("origin")["untargeted_bis"].sum(),
-            "type": "Untargeted",
-        }
-    )
-    print("---untargeted---")
-    print(df_untargeted["successes"].describe())
+        # extract dataframes for plotting
+        df_data = pd.DataFrame(
+            {"successes": df.groupby("origin")["targeted"].sum(), "type": "Targeted"}
+        )
+        f.write("---Stats targeted---\n{}\n".format(df_data["successes"].describe()))
+
+        df_temp = (
+            df.groupby(["origin", "domain", "target"])["untargeted"].sum().reset_index()
+        )
+        df_temp["untargeted_bis"] = df_temp["untargeted"] > 0
+        df_untargeted = pd.DataFrame(
+            {
+                "successes": df_temp.groupby("origin")["untargeted_bis"].sum(),
+                "type": "Untargeted",
+            }
+        )
+        f.write(
+            "---Stats untargeted---\n{}\n".format(df_untargeted["successes"].describe())
+        )
 
     df_data = pd.concat([df_data, df_untargeted])
 
@@ -688,4 +724,4 @@ def plot_crafted_subdomains(filename="output/subdomains/words_results.csv"):
     plot.legend_.set_title(None)
     sns.move_legend(plot, "center right")
     plt.tight_layout()
-    savefig("figs/subdomains/" + filename + "_targeted_untargeted_success.pdf")
+    savefig(output_folder + "/targeted_untargeted_success.pdf")

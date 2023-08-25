@@ -103,7 +103,7 @@ def interpolate(dict_xy, plot_graph=False, filename="traffic"):
 def crux_order_add_traffic():
     """Add distribution traffic information that was interpolated to crux
     dataset"""
-    crux_order_filepath = "output/simulator/crux_total_order.csv"
+    crux_order_filepath = "output_web/simulator/crux_total_order.csv"
     crux_order = pd.read_csv(crux_order_filepath, sep="\t")
     crux_order.drop("Unnamed: 0", axis=1, inplace=True)
     crux_order.drop("rank", axis=1, inplace=True)
@@ -122,7 +122,9 @@ def crux_order_add_traffic():
     proportion[proportion < 0] = 0  # remove potential negative values
 
     crux_order["traffic"] = proportion
-    crux_order.to_csv("output/simulator/crux_order_traffic.csv", index=None, sep="\t")
+    crux_order.to_csv(
+        "output_web/simulator/crux_order_traffic.csv", index=None, sep="\t"
+    )
 
 
 def generate_parallel_input(total_nb_users, file_path, at_once=10000):
@@ -163,16 +165,16 @@ def generate_parallel_input(total_nb_users, file_path, at_once=10000):
 def merge_crux_chrome_traffic():
     """Pre-processing: Add traffic info to crux dataset"""
     crux_order_traffic = pd.read_csv(
-        "output/simulator/crux_order_traffic.csv", sep="\t"
+        "output_web/simulator/crux_order_traffic.csv", sep="\t"
     )
-    crux_chrome = pd.read_csv("output/crux/crux_chrome.csv", sep="\t")
+    crux_chrome = pd.read_csv("output_web/crux/crux_chrome.csv", sep="\t")
     crux_chrome.drop(
         crux_chrome[crux_chrome["topic_id"] == -2].index, inplace=True
     )  # remove -2
     crux_order_traffic.drop("index", axis=1, inplace=True)
     crux_chrome_traffic = crux_chrome.merge(crux_order_traffic, on="domain", how="left")
     crux_chrome_traffic.to_csv(
-        "output/simulator/crux_chrome_traffic.csv", sep="\t", index=False
+        "output_web/simulator/crux_chrome_traffic.csv", sep="\t", index=False
     )
 
 
@@ -180,7 +182,7 @@ def output_noisy_topics_traffic(min_nb_domains_in_top_1m):
     """Output list of topics considered noisy, i.e., if they are seen on <=
     min_nb_domains specified"""
     crux_chrome_traffic = pd.read_csv(
-        "output/simulator/crux_chrome_traffic.csv", sep="\t"
+        "output_web/simulator/crux_chrome_traffic.csv", sep="\t"
     )
     df_topics = (
         crux_chrome_traffic.groupby("topic_id")["domain"]

@@ -1,5 +1,4 @@
 .vscode/
 __pycache__/
-output/
-figs/
+output_web/
 cloudflare_categorization/set_cloudflare_env.sh
