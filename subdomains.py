@@ -1,4 +1,4 @@
-import analysis_library
+import analysis
 import config
 
 import pandas as pd
@@ -32,7 +32,7 @@ def subdomains_create_files(
 
 
 def extract_top_word(wordnet_path, output_path):
-    df_wordnet = analysis_library.read_classified_csv(wordnet_path)
+    df_wordnet = analysis.read_classified_csv(wordnet_path)
     # extract top word for each topic ordered by topic id : first word = unknown topic
     top = 1
     df_extract = (
@@ -90,7 +90,7 @@ if __name__ == "__main__":
         crux_path = sys.argv[7]
         top_rank = int(sys.argv[8])
 
-        analysis_library.words_crafted_subdomains(
+        analysis.words_crafted_subdomains(
             crux_classified_path,
             words_subdomains_path,
             words_targeted_path,
@@ -98,4 +98,4 @@ if __name__ == "__main__":
             crux_path,
             top_rank,
         )
-        analysis_library.plot_crafted_subdomains(output_results_path, output_folder)
+        analysis.plot_crafted_subdomains(output_results_path, output_folder)

@@ -1,6 +1,6 @@
 import config
 import dependencies
-import analysis_library
+import analysis
 
 import os
 import pandas as pd
@@ -18,15 +18,15 @@ if __name__ == "__main__":
         # Check if filter was already applied during classification (i.e., if
         # file already exists)
         if not (os.path.isfile(chrome_csv)):
-            df_not_filtered = analysis_library.read_classified_csv(
+            df_not_filtered = analysis.read_classified_csv(
                 output_folder + config.chrome_ml_model_file
             )
-            df = analysis_library.chrome_filter(df_not_filtered, chrome_csv)
+            df = analysis.chrome_filter(df_not_filtered, chrome_csv)
         else:
-            df = analysis_library.read_chrome_csv(chrome_csv)
+            df = analysis.read_chrome_csv(chrome_csv)
 
         # Plot graphs in figs/ folder and extract stats
-        analysis_library.graph_describe_all(df, output_folder)
+        analysis.graph_describe_all(df, output_folder)
 
     elif sys.argv[1] == "compare_override_to_static":
         # Pass as input the folder where the classification of override is
@@ -38,35 +38,35 @@ if __name__ == "__main__":
         dependencies.load_all()
 
         # Extract static mapping annotated by google
-        df_static = analysis_library.override_create_df()
+        df_static = analysis.override_create_df()
         # Plot and stats for static mapping
-        analysis_library.graph_describe_all(df_static, static_output_folder)
+        analysis.graph_describe_all(df_static, static_output_folder)
         # Extract also stats about the taxonomy
-        analysis_library.taxonomy(static_output_folder)
+        analysis.taxonomy(static_output_folder)
 
         # Same top nb of topics as in static mapping
-        df_override = analysis_library.read_classified_csv(
+        df_override = analysis.read_classified_csv(
             override_output_folder + config.chrome_ml_model_file
         )
-        analysis_library.compare_to_ground_truth(
+        analysis.compare_to_ground_truth(
             df_static, df_override, static_output_folder, "same_nb_as_static", True
         )
-        analysis_library.results_model_ground_truth(
+        analysis.results_model_ground_truth(
             df_static, static_output_folder, "same_nb_as_static"
         )
 
         # Applying chrome filter
-        df_override_chrome = analysis_library.read_chrome_csv(
+        df_override_chrome = analysis.read_chrome_csv(
             override_output_folder + config.chrome_file
         )
-        analysis_library.compare_to_ground_truth(
+        analysis.compare_to_ground_truth(
             df_static,
             df_override_chrome,
             static_output_folder,
             "chrome_filtering",
             False,
         )
-        analysis_library.results_model_ground_truth(
+        analysis.results_model_ground_truth(
             df_static, static_output_folder, "chrome_filtering"
         )
 
@@ -83,46 +83,80 @@ if __name__ == "__main__":
         # Cloudflare comparison
         # Need manual mapping of topics
         if not (os.path.isfile(output_dict_path)):
-            analysis_library.parse_cloudflare_topics_mapping(
+            analysis.parse_cloudflare_topics_mapping(
                 mapping_path, output_dict_path
             )
 
         # compare to static mapping released by Google
-        df_static = analysis_library.override_create_df()
+        df_static = analysis.override_create_df()
         df_cloudflare = pd.read_csv(cloudflare_path, sep="\t")
         df_cloudflare["domain"] = df_cloudflare["domain"].apply(
             lambda x: re.sub(r"[^a-zA-Z0-9]+", " ", x)
         )
         df_c = pd.merge(df_static, df_cloudflare, on="domain", how="inner")
 
-        analysis_library.compare_topics_to_cloudflare(
+        filename_static = "static"
+        analysis.compare_topics_to_cloudflare(
             df_static,
             df_c,
             output_folder,
-            "override",
+            filename_static,
             crux_dependencies_path,
             output_dict_path,
         )
-        analysis_library.describe_results_cloudflare_comparison(
-            output_folder, "override"
+        analysis.describe_results_cloudflare_comparison(
+            output_folder, filename_static
         )
 
         # Compare to crux classification
+        filename_crux = "1M"
         df_crux_chrome = pd.read_csv(topics_path, sep="\t")
         df_cloudflare = pd.read_csv(cloudflare_path, sep="\t")
-        analysis_library.compare_topics_to_cloudflare(
+        analysis.compare_topics_to_cloudflare(
             df_crux_chrome,
             df_cloudflare,
             output_folder,
-            "1M",
+            filename_crux,
             crux_dependencies_path,
             output_dict_path,
             True,
         )
         for r in [1000, 5000, 10000, 50000, 100000, 500000, 1000000]:
-            analysis_library.describe_results_cloudflare_comparison(
-                output_folder, "1M", r
+            analysis.describe_results_cloudflare_comparison(
+                output_folder, filename_crux, r
             )
+
+    elif sys.argv[1] == "manual_verification":
+        if len(sys.argv) != 5:
+            raise ValueError(
+                "Wrong number of arguments passed to this script: needs to be nb_domains_to_manually_verify, path_to_crux_classified_by_topics, output_folder"
+            )
+        else:
+            nb_domains = int(sys.argv[2])
+            path_crux = sys.argv[3]
+            output_folder = sys.argv[4]
+
+            output_sample = output_folder + "/sample.jsonl"
+            output_augmented = output_folder + "/augmented_sample.jsonl"
+            output_verified = output_folder + "/verified_sample.jsonl"
+
+            dependencies.load_all()
+
+            df_crux_chrome = pd.read_csv(path_crux, sep="\t")
+
+            analysis.crux_extract_sample_size_x(
+                df_crux_chrome, nb_domains, output_sample
+            )
+
+            if not (os.path.isfile(output_augmented)):
+                # /!\ WARNING /!\
+                # the following call make http requests to random websites, you may
+                #   want to use a VPN for that
+                analysis.crux_augment_with_meta_description(
+                    output_sample, output_augmented
+                )
+            # manual verification
+            analysis.crux_verification(output_augmented, output_verified)
 
     else:
         raise ValueError("Incorrect argument passed to the function")

@@ -5,9 +5,11 @@ the categorization returned by [Cloudflare Domain Intelligence
 API](https://developers.cloudflare.com/api/operations/domain-intelligence-get-multiple-domain-details),
 available through [Cloudflare Radar](https://radar.cloudflare.com/).
 
-Access to the API requires the creation of a Cloudflare account to generate an
-API token (with permission `Account: Intel - Read`) in order to query the Domain
-Intelligence API (rate limited at about 100 monthly requests).
+- Prerequisite: classify CrUX with the Topics API (see [experiment
+1](../petsymposium-artifact2024.1/experiment1.sh)).
+- Prerequisite: access to the API requires the creation of a Cloudflare account
+to generate an API token (with permission `Account: Intel - Read`) in order to
+query the Domain Intelligence API (rate limited at about 100 monthly requests).
 - Rename `set_cloudflare_env.sh.github` to `set_cloudflare_env.sh` and enter
   your `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`.
 - Run `./cloudflare_categorization.sh` to categorize domain names with Cloudflare

@@ -292,13 +292,13 @@ the Topics API in Google Chrome. Thus, to perform this validation today, the
 versions used in this analysis would need to be updated to the most recent ones,
 another less likely option would be to have access to an older version of Google
 Chrome Beta. See the corresponding [code and
-documentation](../validation_filtering) for more details.
+documentation](../validation_filtering/) for more details.
 
 Manually verifying the assignment of a random sample of websites to topics
 (section 5.2 in the paper) requires the use of a VPN (see [Security/Privacy
 Issues and Ethical Concerns](#securityprivacy-issues-and-ethical-concerns)) and
 is quite a time-consuming process. For completeness, the code is provided
-[here](../manual_verification).
+[here](../manual_verification/).
 
 Finally, the categorization of the top 1M websites (section 5.2 and Table 5 in
 the paper) through the Cloudflare Domain Intelligence API required us several

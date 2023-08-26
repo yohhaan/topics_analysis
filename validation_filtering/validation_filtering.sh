@@ -1,15 +1,17 @@
 #!/bin/sh
 output_folder=output_web/validation
 domains=$output_folder/validation.domains
-output=$output_folder/validation_chrome.csv
+output=$output_folder/chrome.csv
 wordnet_path=./sandbox_dependencies/utils/wordnet/wordnet.words
 
+cd ..
 mkdir -p $output_folder
 
 if [ ! -f $domains ]
 then
     shuf -n 1000 $wordnet_path > $domains
 fi
+
 
 if [ ! -f $output ]
 then
