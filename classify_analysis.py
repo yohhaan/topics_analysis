@@ -3,6 +3,8 @@ import dependencies
 import analysis_library
 
 import os
+import pandas as pd
+import re
 import sys
 
 
@@ -67,6 +69,60 @@ if __name__ == "__main__":
         analysis_library.results_model_ground_truth(
             df_static, static_output_folder, "chrome_filtering"
         )
+
+    elif sys.argv[1] == "compare_to_cloudflare":
+        topics_path = sys.argv[2]
+        cloudflare_path = sys.argv[3]
+        mapping_path = sys.argv[4]
+        output_folder = sys.argv[5]
+        output_dict_path = sys.argv[6]
+        crux_dependencies_path = sys.argv[7]
+
+        dependencies.load_all()
+
+        # Cloudflare comparison
+        # Need manual mapping of topics
+        if not (os.path.isfile(output_dict_path)):
+            analysis_library.parse_cloudflare_topics_mapping(
+                mapping_path, output_dict_path
+            )
+
+        # compare to static mapping released by Google
+        df_static = analysis_library.override_create_df()
+        df_cloudflare = pd.read_csv(cloudflare_path, sep="\t")
+        df_cloudflare["domain"] = df_cloudflare["domain"].apply(
+            lambda x: re.sub(r"[^a-zA-Z0-9]+", " ", x)
+        )
+        df_c = pd.merge(df_static, df_cloudflare, on="domain", how="inner")
+
+        analysis_library.compare_topics_to_cloudflare(
+            df_static,
+            df_c,
+            output_folder,
+            "override",
+            crux_dependencies_path,
+            output_dict_path,
+        )
+        analysis_library.describe_results_cloudflare_comparison(
+            output_folder, "override"
+        )
+
+        # Compare to crux classification
+        df_crux_chrome = pd.read_csv(topics_path, sep="\t")
+        df_cloudflare = pd.read_csv(cloudflare_path, sep="\t")
+        analysis_library.compare_topics_to_cloudflare(
+            df_crux_chrome,
+            df_cloudflare,
+            output_folder,
+            "1M",
+            crux_dependencies_path,
+            output_dict_path,
+            True,
+        )
+        for r in [1000, 5000, 10000, 50000, 100000, 500000, 1000000]:
+            analysis_library.describe_results_cloudflare_comparison(
+                output_folder, "1M", r
+            )
 
     else:
         raise ValueError("Incorrect argument passed to the function")

@@ -63,28 +63,6 @@ def utility_experiments():
     # manual verification
     analysis_library.crux_verification("crux", "exp2")
 
-    # Cloudflare comparison
-    # Need manual mapping of topics
-    analysis_library.parse_cloudflare_topics_mapping()
-
-    # compare manual mapping - override list
-    df_o = analysis_library.override_create_df()
-    df_cloudflare = pd.read_csv(config.cloudflare_csv, sep="\t")
-    df_cloudflare["domain"] = df_cloudflare["domain"].apply(
-        lambda x: re.sub(r"[^a-zA-Z0-9]+", " ", x)
-    )
-    df_c = pd.merge(df_o, df_cloudflare, on="domain", how="inner")
-    analysis_library.compare_topics_to_cloudflare(df_o, df_c, "override")
-    analysis_library.describe_results_cloudflare_comparison("override")
-
-    # Compare crux
-    df_crux_chrome = pd.read_csv(config.crux_chrome_csv, sep="\t")
-    df_cloudflare = pd.read_csv(config.cloudflare_csv, sep="\t")
-    analysis_library.compare_topics_to_cloudflare(
-        df_crux_chrome, df_cloudflare, "1M", True
-    )
-    for r in [1000, 5000, 10000, 50000, 100000, 500000, 1000000]:
-        analysis_library.describe_results_cloudflare_comparison("1M", r)
 
     # E
     df_wordnet = analysis_library.read_classified_csv(config.wordnet_csv)

@@ -82,16 +82,20 @@ if __name__ == "__main__":
                 path_adv_targeted,
             )
     elif sys.argv[1] == "results":
-        crux_path = sys.argv[2]
+        crux_classified_path = sys.argv[2]
         words_subdomains_path = sys.argv[3]
         words_targeted_path = sys.argv[4]
         output_results_path = sys.argv[5]
         output_folder = sys.argv[6]
+        crux_path = sys.argv[7]
+        top_rank = int(sys.argv[8])
 
         analysis_library.words_crafted_subdomains(
-            crux_path,
+            crux_classified_path,
             words_subdomains_path,
             words_targeted_path,
             output_results_path,
+            crux_path,
+            top_rank,
         )
         analysis_library.plot_crafted_subdomains(output_results_path, output_folder)

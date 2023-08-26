@@ -252,13 +252,13 @@ both the two filtering strategies discussed in the paper:
 `chrome_filtering_comparison_stats.txt`. They can directly be compared to the
 results in Table 4 of our paper.
 
-Note: this steps extracts some statistics about the static mapping annotated by
-Google in the `output_web/static` folder.
+Note: this experiment also extracts some statistics about the static mapping
+annotated by Google in the `output_web/static` folder.
 
 #### Experiment 5: Crafting Subdomains
 - Prerequisite: run experiment 1 (quick evaluation)
-- Time to execute: about 2 min for the quick evaluation | 2h+ for longer one
-- Disk space: about 10MB for quick evaluation | about 50MB for longer one
+- Time to execute: about 2 min for quick evaluation | about 2h15 for longer one
+- Disk space: about 10MB for quick evaluation | about 850MB for longer one
 - Result or claim: [Main Result 5: Publishers can influence the classification
   of their
   websites](#main-result-5-publishers-can-influence-the-classification-of-their-websites)
@@ -267,7 +267,9 @@ Run `./experiment5.sh` to craft subdomains and evaluate the possibility of
 triggering an untargeted or targeted classification. For that, we extract for
 each topic the word from WordNet classified with most confidence to that topic,
 and craft for each of the top most visited websites from CrUX all the
-corresponding subdomains that we classify with the Topics API.
+corresponding subdomains quick evaluatiothat we classify with the Topics API.
+This results in 350 topics x 100 (quick evalaution) /or/ 10000 (longer one)
+websites = 35k (quick evalaution) /or/ 3.5M (longer one) subdomains total.
 
 The script automatically detects if WordNet was classified during experiment 1
 (longer evaluation). If so, we can extract the list of top word for each topic,
@@ -276,25 +278,27 @@ if not (quicker evaluation), we use the provided file
 
 Results: see folder `output/crafted_subdomains` for the results of the
 classification of these crafted subdomain: `targeted_untargeted_stats.txt` and
-`targeted_untargeted_success.pdf`. You should get a figure similar to Figure 6
-from our paper, note that to replicate it you need to run the longer evaluation.
+`targeted_untargeted_success.pdf`. You should get a simular figure to Figure 6
+from our paper (to replicate it you need to run the longer evaluation).
 
 ## Limitations
 
-Google released a new taxonomy and model for the Topics API for the Web after
-the submission of our paper. Thus, the latest version of Google Chrome Beta can
-not be used anymore to validate (as it used to be the case) that our filtering
-is the same as Google Chrome's on the versions of the model and taxonomy used in
-our paper. An older version of Google Chrome Beta or updating the sandbox
-dependencies would be required. See also the corresponding [documentation
-file](../validation_filtering.md) for more details.
+Google did not clearly specify how they were filtering the output of the model
+used in Topics API, but we found it by looking through Chromium source code. To
+validate that our filtering was matching Google Chrome's implementation, we
+compared both output classifications on thousands of random domains and words.
+Since the submission of our paper, Google released a new taxonomy and model for
+the Topics API in Google Chrome. Thus, to perform this validation today, the
+versions used in this analysis would need to be updated to the most recent ones,
+another less likely option would be to have access to an older version of Google
+Chrome Beta. See the corresponding [code and
+documentation](../validation_filtering) for more details.
 
 Manually verifying the assignment of a random sample of websites to topics
 (section 5.2 in the paper) requires the use of a VPN (see [Security/Privacy
 Issues and Ethical Concerns](#securityprivacy-issues-and-ethical-concerns)) and
-is quite a time-consuming process. The code is still provided for completeness
-(see the `utility_experiments()` function in `analysis.py` if you are
-interested).
+is quite a time-consuming process. For completeness, the code is provided
+[here](../manual_verification).
 
 Finally, the categorization of the top 1M websites (section 5.2 and Table 5 in
 the paper) through the Cloudflare Domain Intelligence API required us several

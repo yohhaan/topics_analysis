@@ -372,6 +372,247 @@ def chrome_filter(
     return df_top_max
 
 
+def words_crafted_subdomains(
+    crux_chrome_csv,
+    words_subdomains_chrome_csv,
+    words_targeted_csv,
+    output_path_results,
+    crux_path,
+    top_rank,
+):
+    # extract crux to get rank
+    crux = pd.read_csv(crux_path, sep=",")
+    # keep only top
+    crux = crux[crux["rank"] <= max(1000, top_rank)].head(top_rank)
+    # remove http(s)://
+    crux["domain"] = crux.origin.apply(lambda x: re.sub("https?:\/\/", "", x))
+    crux.drop("origin", axis=1, inplace=True)
+    # merge with classification of crux
+    df_crux_chrome = pd.read_csv(crux_chrome_csv, sep="\t")
+    df_crux_chrome = df_crux_chrome.merge(
+        crux, on="domain", how="inner", indicator=True
+    ).query('_merge == "both"')
+    df_crux_chrome.drop("_merge", axis=1, inplace=True)
+
+    df_words_subdomains = pd.read_csv(words_subdomains_chrome_csv, sep="\t")
+    df_words_subdomains.drop_duplicates(inplace=True)
+    df_words_subdomains["topic_id"].replace(-2, 0, inplace=True)
+    # get targets
+    df_words_targeted = pd.read_csv(words_targeted_csv, sep="\t", header=None)
+    df_words_targeted.columns = ["domain", "target"]
+    # targeted results
+    df_words = df_words_subdomains.merge(df_words_targeted, how="left", on="domain")
+    df_words["targeted"] = np.where(df_words["topic_id"] == df_words["target"], 1, 0)
+
+    # untargeted results
+    df_words["origin"] = df_words.domain.apply(lambda x: x.split(".", 1)[1])
+    df_words["untargeted"] = df_words.apply(
+        lambda x: x["topic_id"]
+        not in df_crux_chrome[df_crux_chrome["domain"] == x["origin"]]["topic_id"],
+        axis=1,
+    )
+    df_words.to_csv(output_path_results, sep="\t")
+
+
+def plot_crafted_subdomains(output_path_results, output_folder):
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    sns.set_theme(style="darkgrid")
+
+    df = pd.read_csv(output_path_results, sep="\t")
+
+    df.drop("Unnamed: 0", axis=1, inplace=True)
+    df.drop_duplicates(inplace=True)
+
+    with open(output_folder + "/targeted_untargeted_stats.txt", "w") as f:
+        f.write("Targeted: {}\n".format(df["targeted"].sum() / df["domain"].nunique()))
+        f.write(
+            "Untargeted: {}\n".format(
+                np.sum(df.groupby(["domain", "target"])["untargeted"].sum() > 0)
+                / df["domain"].nunique()
+            )
+        )
+
+        # extract dataframes for plotting
+        df_data = pd.DataFrame(
+            {"successes": df.groupby("origin")["targeted"].sum(), "type": "Targeted"}
+        )
+        f.write("---Stats targeted---\n{}\n".format(df_data["successes"].describe()))
+
+        df_temp = (
+            df.groupby(["origin", "domain", "target"])["untargeted"].sum().reset_index()
+        )
+        df_temp["untargeted_bis"] = df_temp["untargeted"] > 0
+        df_untargeted = pd.DataFrame(
+            {
+                "successes": df_temp.groupby("origin")["untargeted_bis"].sum(),
+                "type": "Untargeted",
+            }
+        )
+        f.write(
+            "---Stats untargeted---\n{}\n".format(df_untargeted["successes"].describe())
+        )
+
+    df_data = pd.concat([df_data, df_untargeted])
+
+    plt.clf()
+    # cdf
+    plot = sns.ecdfplot(data=df_data, x="successes", stat="proportion", hue="type")
+    plot.set(xlabel="Number of subdomains misclassified", ylabel="Proportion")
+    # plot.set_xscale("symlog")
+    plot.set_xlim([0, 355])
+    plot.set_ylim([-0.02, 1.02])
+    plot.legend_.set_title(None)
+    sns.move_legend(plot, "center right")
+    plt.tight_layout()
+    savefig(output_folder + "/targeted_untargeted_success.pdf")
+
+
+def parse_cloudflare_topics_mapping(mapping_path, output_dict_path):
+    import json
+    import pickle
+
+    cloudflare = {}
+    with open(mapping_path, "r") as f:
+        mapping = json.load(f)
+    for elt in mapping:
+        subcategories = elt["subcategories"]
+        if subcategories != None:
+            sub_ids = []
+            for elt_bis in subcategories:
+                cloudflare[elt_bis["id"]] = elt_bis["topic_id"]
+                for id in elt_bis["topic_id"]:
+                    if id not in sub_ids:
+                        sub_ids.append(id)
+            cloudflare[elt["id"]] = sub_ids
+        else:
+            cloudflare[elt["id"]] = elt["topic_id"]
+
+    # save to disk dict as .pickle
+    with open(output_dict_path, "wb") as output:
+        pickle.dump(cloudflare, output, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+def compare_topics_to_cloudflare(
+    df_crux_chrome,
+    df_crux_cloudflare,
+    output_path,
+    filename,
+    crux_ranks_info_path,
+    mapping_dict_path,
+    ranks_bool=False,
+):
+    import pickle
+    import re
+
+    with open(mapping_dict_path, "rb") as f:
+        mapping = pickle.load(f)
+
+    df_cloudflare = df_crux_cloudflare[
+        df_crux_cloudflare["cloudflare_id"] != -10
+    ]  # id used in python script when Cloudflare API does not return a result
+
+    if ranks_bool:
+        # Get ranks
+        ranks = pd.read_csv(crux_ranks_info_path, sep=",")
+        # Regex to remove http(s)://
+        ranks["origin"] = ranks.origin.apply(lambda x: re.sub("https?:\/\/", "", x))
+        ranks.rename(columns={"origin": "domain"}, inplace=True)
+        ranks = ranks.drop_duplicates(subset="domain", keep="first")
+
+        df_cloudflare = df_cloudflare.merge(ranks, on=["domain"], how="left")
+
+    df_cloudflare_unique = df_cloudflare["domain"].unique()
+
+    intersection = {}
+    overlap = {}
+    if ranks_bool:
+        for r in [1000, 5000, 10000, 50000, 100000, 500000, 1000000]:
+            intersection[r] = []
+            overlap[r] = []
+    else:
+        rank = "no_rank"
+        intersection[rank] = []
+        overlap[rank] = []
+
+    i = 0
+    for domain in df_cloudflare_unique:
+        if i % 1000 == 0:
+            print("Processing {}-th domain".format(i))
+        i += 1
+        cloudflare_pred = df_cloudflare[df_cloudflare.domain == domain]
+        topics_pred = df_crux_chrome[df_crux_chrome.domain == domain]
+        topics_tids = topics_pred["topic_id"]
+        cloudflare_cids = cloudflare_pred["cloudflare_id"]
+        cloudflare_tids = []
+        for c in cloudflare_cids:
+            topics = mapping[c]
+            for t in topics:
+                if t not in cloudflare_tids:
+                    cloudflare_tids.append(t)
+
+        inter = list(set(cloudflare_tids).intersection(topics_tids))
+
+        if ranks_bool:
+            rank = cloudflare_pred["rank"].values[0]
+
+        intersection[rank].append(len(inter))
+        overlap[rank].append(len(inter) / len(topics_tids))
+
+    with open(output_path + "/intersection_" + filename + ".pickle", "wb") as output:
+        pickle.dump(intersection, output, protocol=pickle.HIGHEST_PROTOCOL)
+
+    with open(output_path + "/overlap_" + filename + ".pickle", "wb") as output:
+        pickle.dump(overlap, output, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+def describe_results_cloudflare_comparison(output_path, filename, rank="no_rank"):
+    import pickle
+
+    with open(output_path + "/intersection_" + filename + ".pickle", "rb") as f:
+        intersection = pickle.load(f)
+    with open(output_path + "/overlap_" + filename + ".pickle", "rb") as f:
+        overlap = pickle.load(f)
+
+    if rank != "no_rank":
+        intersection_temp = []
+        overlap_temp = []
+        for r in intersection.keys():
+            if r <= rank:
+                intersection_temp = np.concatenate(
+                    (intersection_temp, intersection[r]), axis=None
+                )
+                overlap_temp = np.concatenate((overlap_temp, overlap[r]), axis=None)
+        with open(output_path + "/stats_" + filename + ".txt", "a") as f:
+            f.write("-----{}-----\n".format(rank))
+            f.write("Nb domains: {}\n".format(len(intersection_temp)))
+            f.write(
+                "Proportion overlap: {}\n".format(
+                    np.sum(overlap_temp) / len(overlap_temp)
+                )
+            )
+            f.write(
+                "Proportion one_correct: {}\n".format(
+                    np.sum(intersection_temp > 0) / len(intersection_temp)
+                )
+            )
+    else:
+        with open(output_path + "/stats_" + filename + ".txt", "w") as f:
+            f.write("Nb domains: {}\n".format(len(intersection["no_rank"])))
+            f.write(
+                "Proportion overlap: {}\n".format(
+                    np.sum(overlap["no_rank"]) / len(overlap["no_rank"])
+                )
+            )
+            f.write(
+                "Proportion one_correct: {}\n".format(
+                    np.sum(np.array(intersection["no_rank"]) > 0)
+                    / len(intersection["no_rank"])
+                )
+            )
+
+
 ###############################
 ###############################
 
@@ -477,251 +718,3 @@ def crux_verification(foldername, filename):
         )
         with open(output_file, "a") as f:
             f.write(df_row.to_json(orient="records", lines=True, force_ascii=False))
-
-
-### CrUX comparison Topics classification and Cloudflare categorization ###
-# after running cloudflare_categorization.sh and manually mapping Cloudflare categories
-# to Topics run following functions
-
-
-def parse_cloudflare_topics_mapping(
-    mapping_path="cloudflare_categories_manual_mapping_topics.json",
-    output_dict_path="output_web/cloudflare/mapping_categories.pickle",
-):
-    import json
-    import pickle
-
-    cloudflare = {}
-    with open(mapping_path, "r") as f:
-        mapping = json.load(f)
-    for elt in mapping:
-        subcategories = elt["subcategories"]
-        if subcategories != None:
-            sub_ids = []
-            for elt_bis in subcategories:
-                cloudflare[elt_bis["id"]] = elt_bis["topic_id"]
-                for id in elt_bis["topic_id"]:
-                    if id not in sub_ids:
-                        sub_ids.append(id)
-            cloudflare[elt["id"]] = sub_ids
-        else:
-            cloudflare[elt["id"]] = elt["topic_id"]
-
-    # save to disk dict as .pickle
-    with open(output_dict_path, "wb") as output:
-        pickle.dump(cloudflare, output, protocol=pickle.HIGHEST_PROTOCOL)
-
-
-def compare_topics_to_cloudflare(
-    df_crux_chrome,
-    df_crux_cloudflare,
-    filename,
-    ranks_bool=False,
-    ranks_filepath="sandbox_dependencies/topics_web/crux.csv",
-    dict_path="output_web/cloudflare/mapping_categories.pickle",
-):
-    import pickle
-    import re
-
-    with open(dict_path, "rb") as f:
-        mapping = pickle.load(f)
-
-    df_cloudflare = df_crux_cloudflare[
-        df_crux_cloudflare["cloudflare_id"] != -10
-    ]  # id used in python script when Cloudflare API does not return a result
-
-    if ranks_bool:
-        # Get ranks
-        ranks = pd.read_csv(ranks_filepath, sep=",")
-        # Regex to remove http(s)://
-        ranks["origin"] = ranks.origin.apply(lambda x: re.sub("https?:\/\/", "", x))
-        ranks.rename(columns={"origin": "domain"}, inplace=True)
-        ranks = ranks.drop_duplicates(subset="domain", keep="first")
-
-        df_cloudflare = df_cloudflare.merge(ranks, on=["domain"], how="left")
-
-    df_cloudflare_unique = df_cloudflare["domain"].unique()
-
-    intersection = {}
-    overlap = {}
-    if ranks_bool:
-        for r in [1000, 5000, 10000, 50000, 100000, 500000, 1000000]:
-            intersection[r] = []
-            overlap[r] = []
-    else:
-        rank = "no_rank"
-        intersection[rank] = []
-        overlap[rank] = []
-
-    i = 0
-    for domain in df_cloudflare_unique:
-        print(i)
-        i += 1
-        cloudflare_pred = df_cloudflare[df_cloudflare.domain == domain]
-        topics_pred = df_crux_chrome[df_crux_chrome.domain == domain]
-        topics_tids = topics_pred["topic_id"]
-        cloudflare_cids = cloudflare_pred["cloudflare_id"]
-        cloudflare_tids = []
-        for c in cloudflare_cids:
-            topics = mapping[c]
-            for t in topics:
-                if t not in cloudflare_tids:
-                    cloudflare_tids.append(t)
-
-        inter = list(set(cloudflare_tids).intersection(topics_tids))
-
-        if ranks_bool:
-            rank = cloudflare_pred["rank"].values[0]
-
-        intersection[rank].append(len(inter))
-        overlap[rank].append(len(inter) / len(topics_tids))
-
-    with open(
-        "output_web/cloudflare/result_intersection_" + filename + ".pickle", "wb"
-    ) as output:
-        pickle.dump(intersection, output, protocol=pickle.HIGHEST_PROTOCOL)
-
-    with open(
-        "output_web/cloudflare/result_overlap_" + filename + ".pickle", "wb"
-    ) as output:
-        pickle.dump(overlap, output, protocol=pickle.HIGHEST_PROTOCOL)
-
-
-def describe_results_cloudflare_comparison(filename, rank="no_rank"):
-    import pickle
-
-    with open(
-        "output_web/cloudflare/result_intersection_" + filename + ".pickle", "rb"
-    ) as f:
-        intersection = pickle.load(f)
-    with open(
-        "output_web/cloudflare/result_overlap_" + filename + ".pickle", "rb"
-    ) as f:
-        overlap = pickle.load(f)
-
-    if rank != "no_rank":
-        intersection_temp = []
-        overlap_temp = []
-        for r in intersection.keys():
-            if r <= rank:
-                intersection_temp = np.concatenate(
-                    (intersection_temp, intersection[r]), axis=None
-                )
-                overlap_temp = np.concatenate((overlap_temp, overlap[r]), axis=None)
-        print("-----{}-----".format(rank))
-        print("Nb domains: {}".format(len(intersection_temp)))
-        print("Proportion overlap: {}".format(np.sum(overlap_temp) / len(overlap_temp)))
-        print(
-            "Proportion one_correct: {}".format(
-                np.sum(intersection_temp > 0) / len(intersection_temp)
-            )
-        )
-    else:
-        print("Nb domains: {}".format(len(intersection["no_rank"])))
-        print(
-            "Proportion overlap: {}".format(
-                np.sum(overlap["no_rank"]) / len(overlap["no_rank"])
-            )
-        )
-        print(
-            "Proportion one_correct: {}".format(
-                np.sum(np.array(intersection["no_rank"]) > 0)
-                / len(intersection["no_rank"])
-            )
-        )
-
-
-### Crafting Subdomains ###
-def words_crafted_subdomains(
-    crux_chrome_csv,
-    words_subdomains_chrome_csv,
-    words_targeted_csv,
-    output_path_results,
-):
-    # extract crux to get rank
-    crux = pd.read_csv("sandbox_dependencies/topics_web/crux.csv", sep=",")
-    # keep only top
-    crux = crux[crux["rank"] <= 10000]
-    # remove http(s)://
-    crux["domain"] = crux.origin.apply(lambda x: re.sub("https?:\/\/", "", x))
-    crux.drop("origin", axis=1, inplace=True)
-    # merge with classification of crux
-    df_crux_chrome = pd.read_csv(crux_chrome_csv, sep="\t")
-    df_crux_chrome = df_crux_chrome.merge(
-        crux, on="domain", how="inner", indicator=True
-    ).query('_merge == "both"')
-    df_crux_chrome.drop("_merge", axis=1, inplace=True)
-
-    df_words_subdomains = pd.read_csv(words_subdomains_chrome_csv, sep="\t")
-    df_words_subdomains.drop_duplicates(inplace=True)
-    df_words_subdomains["topic_id"].replace(-2, 0, inplace=True)
-    # get targets
-    df_words_targeted = pd.read_csv(words_targeted_csv, sep="\t", header=None)
-    df_words_targeted.columns = ["domain", "target"]
-    # targeted results
-    df_words = df_words_subdomains.merge(df_words_targeted, how="left", on="domain")
-    df_words["targeted"] = np.where(df_words["topic_id"] == df_words["target"], 1, 0)
-
-    # untargeted results
-    df_words["origin"] = df_words.domain.apply(lambda x: x.split(".", 1)[1])
-    df_words["untargeted"] = df_words.apply(
-        lambda x: x["topic_id"]
-        not in df_crux_chrome[df_crux_chrome["domain"] == x["origin"]]["topic_id"],
-        axis=1,
-    )
-    df_words.to_csv(output_path_results, sep="\t")
-
-
-def plot_crafted_subdomains(output_path_results, output_folder):
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-
-    sns.set_theme(style="darkgrid")
-
-    df = pd.read_csv(output_path_results, sep="\t")
-
-    df.drop("Unnamed: 0", axis=1, inplace=True)
-    df.drop_duplicates(inplace=True)
-
-    with open(output_folder + "/targeted_untargeted_stats.txt", "w") as f:
-        f.write("Targeted: {}\n".format(df["targeted"].sum() / df["domain"].nunique()))
-        f.write(
-            "Untargeted: {}\n".format(
-                np.sum(df.groupby(["domain", "target"])["untargeted"].sum() > 0)
-                / df["domain"].nunique()
-            )
-        )
-
-        # extract dataframes for plotting
-        df_data = pd.DataFrame(
-            {"successes": df.groupby("origin")["targeted"].sum(), "type": "Targeted"}
-        )
-        f.write("---Stats targeted---\n{}\n".format(df_data["successes"].describe()))
-
-        df_temp = (
-            df.groupby(["origin", "domain", "target"])["untargeted"].sum().reset_index()
-        )
-        df_temp["untargeted_bis"] = df_temp["untargeted"] > 0
-        df_untargeted = pd.DataFrame(
-            {
-                "successes": df_temp.groupby("origin")["untargeted_bis"].sum(),
-                "type": "Untargeted",
-            }
-        )
-        f.write(
-            "---Stats untargeted---\n{}\n".format(df_untargeted["successes"].describe())
-        )
-
-    df_data = pd.concat([df_data, df_untargeted])
-
-    plt.clf()
-    # cdf
-    plot = sns.ecdfplot(data=df_data, x="successes", stat="proportion", hue="type")
-    plot.set(xlabel="Number of subdomains misclassified", ylabel="Proportion")
-    # plot.set_xscale("symlog")
-    plot.set_xlim([0, 355])
-    plot.set_ylim([-0.02, 1.02])
-    plot.legend_.set_title(None)
-    sns.move_legend(plot, "center right")
-    plt.tight_layout()
-    savefig(output_folder + "/targeted_untargeted_success.pdf")

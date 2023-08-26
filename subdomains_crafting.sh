@@ -36,7 +36,7 @@ else
     fi
 
     #extract results
-    python3 subdomains.py results $crux_classified_path $words_output $words_truth $results_path $output_folder
+    python3 subdomains.py results $crux_classified_path $words_output $words_truth $results_path $output_folder $crux $top
 fi
 
 

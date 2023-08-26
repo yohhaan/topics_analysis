@@ -1,3 +1,6 @@
+import analysis_library
+import dependencies
+
 import os
 import pandas as pd
 import re
@@ -17,26 +20,26 @@ headers = {
     "Authorization": "Bearer " + CLOUDFLARE_API_TOKEN,
 }
 
+
 if __name__ == "__main__":
     if sys.argv[1] == "cloudflare_csv_header":
         print("domain\tcloudflare_id")
-    if sys.argv[1] == "crux_top":
+
+    elif sys.argv[1] == "crux_top":
         """
         Generate domain list of top domains according to CrUX
         """
         top = int(sys.argv[2])
+        crux_path = sys.argv[3]
+        output_path = sys.argv[4]
         # CrUX
-        crux = pd.read_csv("sandbox_dependencies/topics_web/crux.csv", sep=",")
+        crux = pd.read_csv(crux_path, sep=",")
         crux = crux.head(top)
         # Regex to remove http(s)://
         crux["origin"] = crux.origin.apply(lambda x: re.sub("https?:\/\/", "", x))
-        crux.origin.to_csv(
-            "output_web/cloudflare/crux_top" + str(top) + ".domains",
-            index=False,
-            header=False,
-        )
+        crux.origin.to_csv(output_path, index=False, header=False)
 
-    if sys.argv[1] == "api_request":
+    elif sys.argv[1] == "api_request":
         """
         Call Cloudflare API to classify bulk domains
         """

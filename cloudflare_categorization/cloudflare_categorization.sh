@@ -1,14 +1,16 @@
 #!/bin/bash
 top=1000000
+crux_path=../sandbox_dependencies/topics_web/crux.csv
+
 output_folder=../output_web/cloudflare
-domains=$output_folder/cloudflare.domains
+domains=$output_folder/cloudflare_$top.domains
 output=$output_folder/cloudflare.csv
 
 mkdir -p $output_folder
 
 if [ ! -f $domains ]
 then
-    python3 cloudflare_api.py crux_top $top
+    python3 cloudflare_api.py crux_top $top $crux_path $domains
 fi
 
 if [ ! -f $output ]
