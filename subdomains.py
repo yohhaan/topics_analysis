@@ -1,5 +1,4 @@
 import analysis
-import config
 
 import pandas as pd
 import re
