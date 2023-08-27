@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # To completely reproduce the analysis of the paper
-longer_evaluation=false
+complete_evaluation=false
 
 # Move to root of git repository
 cd ..
@@ -10,7 +10,7 @@ cd ..
 ./classify_override.sh
 ./classify_crux.sh
 
-if [ "$longer_evaluation" = true ]
+if [ "$complete_evaluation" = true ]
 then
     #Classify Tranco and Wordnet as well and plot graphs and stats
     ./classify_tranco.sh

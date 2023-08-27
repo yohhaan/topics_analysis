@@ -1,9 +1,9 @@
 #!/bin/sh
 
 # To completely reproduce the analysis of the paper
-longer_evaluation=false
+complete_evaluation=false
 
-if [ "$longer_evaluation" = true ]
+if [ "$complete_evaluation" = true ]
 then
     top=10000
 else

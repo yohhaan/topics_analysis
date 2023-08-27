@@ -182,14 +182,14 @@ some can be never observed at all.
 ### Experiments
 
 **Note:** Shell scripts `./experiment{1/2/3/5}.sh` contains the variable
-`longer_evaluation` that needs to be set to `true` if you are looking to fully
-reproduce our results (we recommend leaving it set to `false` for a way quicker
-evaluation).
+`complete_evaluation` that needs to be set to `true` if you are looking to fully
+reproduce our results (we recommend leaving it set to `false` for a quick
+evaluation of our artifact).
 
 
 #### Experiment 1: Domains classification by the Topics API
-- Time to execute: about 30 min for the quick evaluation | 1h+ for longer one
-- Disk space: about 150MB for quick evaluation | about 1.2GB for  longer one
+- Time to execute: about 30 min (quick evaluation) | 1h+ (complete evaluation)
+- Disk space: about 150MB (quick evaluation) | about 1.2GB (complete evaluation)
 - Result or claim: [Main Result 1: The distribution of observed topics on the
   web is
   skewed](#main-result-1-the-distribution-of-observed-topics-on-the-web-is-skewed)
@@ -201,39 +201,60 @@ the English dictionary into their corresponding topics:
   provided by Google)
 - `crux` (quick evaluation): Top 1M most visited origins/domains from
   [CrUX](https://github.com/zakird/crux-top-lists)
-- `tranco` (longer evaluation): Top 1M most visited origins/domains from
+- `tranco` (complete evaluation): Top 1M most visited origins/domains from
   [Tranco](https://tranco-list.eu/)
-- `wordnet` (longer evaluation): English dictionary returned by WordNet
+- `wordnet` (complete evaluation): English dictionary returned by WordNet
 
 Results: see the corresponding folder under `output_web/` for the classification
 (`csv` files), figures, and statistics.
 
-Note: figures will likely slightly differ from the ones from the paper as you
-are evaluating against a newer version of the top lists than when we originally
-ran our analysis.
-
-
 #### Experiment 2: Noise Removal
 - Prerequisite: run experiment 1 (quick evaluation)
-- Time to execute: about 30 min
+- Optional prerequisite: re-order CrUX which takes several hours
+- Time to execute: about 30 min (quick evaluation)
 - Disk space: about 3GB
 - Result or claim: [Main Result 2: Noisy topics can be removed by
   advertisers](#main-result-2-noisy-topics-can-be-removed-by-advertisers)
 
-We are in the process of finalizing the transfer of this part of our code base
-to a more modular script to facilitate reproduction. In the meantime, follow
-instructions in this documentation file [../simulator.md](../simulator.md).
+Run `./experiment2.sh` to simulate a population of synthetic users reporting
+their topics across epochs to an advertiser identifying the noisy topics to
+discard them.
+
+The generation of synthetic users requires to set a total order on the CrUX
+top-list, for a quick evaluation, we provide such ordered list with our
+artifact. See instructions provided [here](../simulator/order_crux.md) to reorder the CrUX top-list yourself (it takes several hours).
+
+Results: see `output_web/simulator/classifier/` for results (Table 3 of our
+paper) and graphs (Figure 4 of paper).
+
+Note: results slightly differ depending on the generated population, but they
+should be in the same ballpark.
 
 #### Experiment 3: Collusion and Cross-site Tracking
 - Prerequisite: run experiment 1 (quick evaluation)
-- Time to execute: about 30 min
-- Disk space: about 5GB
+- Time to execute: about 30 min (quick evaluation)
+- Disk space: about 5GB (quick evaluation)
 - Result or claim: [Main Result 3: Users can be re-identified across
   websites](#main-result-3-users-can-be-re-identified-across-websites)
 
-We are in the process of finalizing the trasnfer of this part of our code base
-to a more modular script to facilitate reproduction. In the meantime, follow
-instructions in this documentation file [../simulator.md](../simulator.md).
+Run `./experiment3.sh` to simulate a population of synthetic users across epochs
+and evaluate how two advertisers observing the topics of these users can
+re-identify them across websites.
+
+The generation of synthetic users requires to set a total order on the CrUX
+top-list, for a quick evaluation, we provide such ordered list with our
+artifact. See instructions provided [here](../simulator/order_crux.md) to reorder the CrUX top-list yourself (it takes several hours).
+
+Population Size:
+- For quick evaluation, fixed to 50k users
+- For complete evaluation: modify it to 250k users
+
+Results: see under `output_web/simulator/` the folder corresponding to the
+population size you simulated for results (Figure 5 of paper).
+
+Note: you need to run the complete evaluation to get more meaningful results
+(larger population size), the results may slightly differ depending on the
+generated population, but they should be in the same ballpark.
 
 #### Experiment 4: Static Mapping Reclassification
 - Prerequisite: run experiment 1 (quick evaluation)
@@ -257,8 +278,8 @@ annotated by Google in the `output_web/static` folder.
 
 #### Experiment 5: Crafting Subdomains
 - Prerequisite: run experiment 1 (quick evaluation)
-- Time to execute: about 2 min for quick evaluation | about 2h15 for longer one
-- Disk space: about 10MB for quick evaluation | about 850MB for longer one
+- Time to execute: about 2 min (quick evaluation) | about 2h15 (complete evaluation)
+- Disk space: about 10MB (quick evaluation) | about 850MB (complete evaluation)
 - Result or claim: [Main Result 5: Publishers can influence the classification
   of their
   websites](#main-result-5-publishers-can-influence-the-classification-of-their-websites)
@@ -268,18 +289,19 @@ triggering an untargeted or targeted classification. For that, we extract for
 each topic the word from WordNet classified with most confidence to that topic,
 and craft for each of the top most visited websites from CrUX all the
 corresponding subdomains quick evaluatiothat we classify with the Topics API.
-This results in 350 topics x 100 (quick evalaution) /or/ 10000 (longer one)
-websites = 35k (quick evalaution) /or/ 3.5M (longer one) subdomains total.
+This results in 350 topics x 100 (quick evalaution) /or/ 10000 (complete
+evaluation) websites = 35k (quick evalaution) /or/ 3.5M (complete evaluation)
+subdomains total.
 
 The script automatically detects if WordNet was classified during experiment 1
-(longer evaluation). If so, we can extract the list of top word for each topic,
+(complete evaluation). If so, we can extract the list of top word for each topic,
 if not (quicker evaluation), we use the provided file
 `petsymposium-artifact2024.1/taxonomy.words`.
 
 Results: see folder `output/crafted_subdomains` for the results of the
 classification of these crafted subdomain: `targeted_untargeted_stats.txt` and
 `targeted_untargeted_success.pdf`. You should get a simular figure to Figure 6
-from our paper (to replicate it you need to run the longer evaluation).
+from our paper (to replicate it, you need to run the complete evaluation).
 
 ## Limitations
 
