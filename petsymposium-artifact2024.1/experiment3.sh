@@ -3,17 +3,22 @@
 # To completely reproduce the analysis of the paper
 complete_evaluation=false
 
-output_simulator_folder=../output_web/simulator
-
 if [ "$complete_evaluation" = true ]
 then
-    population_size=250000
+    nb_users=250000
 else
-    population_size=52000
+    nb_users=50000
 fi
 
-output_folder=$output_simulator_folder/$population_size
+output_simulator_folder=../output_web/simulator
+output_folder=$output_simulator_folder/${nb_users}_users
+
+users_input_path=$output_folder/${nb_users}_users.input
+users_topics_path=$output_folder/${nb_users}_users_topics.csv
+
 crux_order_traffic_path=.$output_simulator_folder/crux_order_traffic.csv
+crux_classified_path=../output_web/crux/chrome.csv
+
 
 mkdir -p $output_folder
 
@@ -25,5 +30,17 @@ then
     tar -xf crux_order_traffic.tar.gz -C $output_simulator_folder
 fi
 
-# generate users and simulate + plot
+#Switch to simulator folder
+cd ../simulator
 
+if [ ! -f $users_topics_path ]
+then
+    # Generate users
+    ./generate_users.sh $nb_users
+fi
+
+# Simulate epochs - denoise and re-identify
+python3 simulator.py denoise_and_reidentify $crux_classified_path $users_topics_path $output_folder
+
+# Plot results
+python3 simulator.py plot $output_folder $nb_users

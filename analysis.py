@@ -91,7 +91,6 @@ def histplot_topics_per_domain(df, output_folder):
     # display count value on top
     plot.bar_label(plot.containers[0])
     plot.set(xlabel="Number of topic(s) per individual domain", ylabel="Domains count")
-    plt.tight_layout()
     savefig(output_folder + "/histplot_topics_per_domain.pdf")
     return data
 
@@ -138,7 +137,6 @@ def cdf_histplot_domains_per_topic(df, output_folder):
     plot.set_xlim(left=0)
     plot.set_ylim([0, 350])
     plot.set_xticks(bins, bins_labels)
-    plt.tight_layout()
     savefig(output_folder + "/cdf_histplot_domains_per_topic.pdf")
     return data
 
@@ -463,7 +461,6 @@ def plot_crafted_subdomains(output_path_results, output_folder):
     plot.set_ylim([-0.02, 1.02])
     plot.legend_.set_title(None)
     sns.move_legend(plot, "center right")
-    plt.tight_layout()
     savefig(output_folder + "/targeted_untargeted_success.pdf")
 
 

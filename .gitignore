@@ -2,3 +2,4 @@
 __pycache__/
 output_web/
 cloudflare_categorization/set_cloudflare_env.sh
+simulator/__pycache__/

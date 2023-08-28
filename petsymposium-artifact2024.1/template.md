@@ -58,10 +58,11 @@ most visited websites with Cloudflare API.
 
 And so, while we provide the explanations to run all of our experiments, we do
 not expect artifact reviewers to execute the most time-consuming ones. Instead,
-we also provide parameters that allow for a quicker evaluation.
+we provide parameters and scripts that allow for a quick evaluation of the main
+features of our artifact.
 
-- Time: about 2h for the quick evaluation with 8 cores/16 threads/64GB RAM.
-- Storage: 10GB of free storage should be sufficient.
+- Time: about 1h30 for the quick evaluation with 8 cores/16 threads/64GB RAM.
+- Storage: 2GB of free storage should be sufficient for the quick evaluation.
 
 
 ## Environment
@@ -158,6 +159,8 @@ some can be never observed at all.
   Scenario." and "Multi-shot Scenario." (Table 3 and Figure 4 (a), (b), and
   (c)).
 - See [Experiment 2: Noise Removal](#experiment-2-noise-removal).
+- See [Experiment 3: Collusion and Cross-site
+  Tracking](#experiment-3-collusion-and-cross-site-tracking).
 
 #### Main Result 3: Users can be re-identified across websites
 - Advertisers can uniquely and with a higher chance than random re-identify
@@ -181,7 +184,7 @@ some can be never observed at all.
 
 ### Experiments
 
-**Note:** Shell scripts `./experiment{1/2/3/5}.sh` contains the variable
+**Note:** Shell scripts `./experiment{1/3/5}.sh` contains the variable
 `complete_evaluation` that needs to be set to `true` if you are looking to fully
 reproduce our results (we recommend leaving it set to `false` for a quick
 evaluation of our artifact).
@@ -210,9 +213,9 @@ Results: see the corresponding folder under `output_web/` for the classification
 
 #### Experiment 2: Noise Removal
 - Prerequisite: run experiment 1 (quick evaluation)
-- Optional prerequisite: re-order CrUX which takes several hours
-- Time to execute: about 30 min (quick evaluation)
-- Disk space: about 3GB
+- Optional prerequisite: re-order CrUX which takes several hours (optional)
+- Time to execute: about 2 min
+- Disk space: about 50MB
 - Result or claim: [Main Result 2: Noisy topics can be removed by
   advertisers](#main-result-2-noisy-topics-can-be-removed-by-advertisers)
 
@@ -222,19 +225,28 @@ discard them.
 
 The generation of synthetic users requires to set a total order on the CrUX
 top-list, for a quick evaluation, we provide such ordered list with our
-artifact. See instructions provided [here](../simulator/order_crux.md) to reorder the CrUX top-list yourself (it takes several hours).
+artifact. See instructions provided [here](../simulator/order_crux.md) to
+reorder the CrUX top-list yourself (it takes several hours).
 
-Results: see `output_web/simulator/classifier/` for results (Table 3 of our
-paper) and graphs (Figure 4 of paper).
+Results: see `output_web/simulator/classifier/` for results about the classifier
+(Table 3 of our paper corresponds to `denoise_one_shot.stats`). To obtain graphs
+from Figure 4 of our paper, see [Experiment 3: Collusion and Cross-site
+  Tracking](#experiment-3-collusion-and-cross-site-tracking).
 
-Note: results slightly differ depending on the generated population, but they
-should be in the same ballpark.
+Note: results can slightly differ depending on the generated population (for
+instance `petsymposium-artifact2024.1/52000_users_topics.csv.tar.gz` is one of
+the population we generated for our results).
 
 #### Experiment 3: Collusion and Cross-site Tracking
 - Prerequisite: run experiment 1 (quick evaluation)
-- Time to execute: about 30 min (quick evaluation)
-- Disk space: about 5GB (quick evaluation)
-- Result or claim: [Main Result 3: Users can be re-identified across
+- Optional prerequisite: re-order CrUX which takes several hours (optional)
+- Time to execute: about 15 min (quick evaluation) | about 6h15min (complete
+evaluation
+- Disk space: about 60MB (quick evaluation) | about 110MB (complete
+evaluation)
+- Result or claim: [Main Result 2: Noisy topics can be removed by
+  advertisers](#main-result-2-noisy-topics-can-be-removed-by-advertisers)
+ and [Main Result 3: Users can be re-identified across
   websites](#main-result-3-users-can-be-re-identified-across-websites)
 
 Run `./experiment3.sh` to simulate a population of synthetic users across epochs
@@ -243,22 +255,29 @@ re-identify them across websites.
 
 The generation of synthetic users requires to set a total order on the CrUX
 top-list, for a quick evaluation, we provide such ordered list with our
-artifact. See instructions provided [here](../simulator/order_crux.md) to reorder the CrUX top-list yourself (it takes several hours).
+artifact. See instructions provided [here](../simulator/order_crux.md) to
+reorder the CrUX top-list yourself (it takes several hours).
 
 Population Size:
-- For quick evaluation, fixed to 50k users
-- For complete evaluation: modify it to 250k users
+- 50k users (quick evaluation)
+- 250k users (complete evaluation)
 
 Results: see under `output_web/simulator/` the folder corresponding to the
-population size you simulated for results (Figure 5 of paper).
+population size you simulated for results (`denoise_multi_shot.stats` and
+`cdf_reidentification.stats`). Figures 4 of paper correspond to
+`denoise_accuracy_precision.pdf`, `denoise_tpr_fpr.pdf`,
+`denoise_nb_top5_recovered`. Figure 5 of paper corresponds to
+`cdf_size_groups/pdf`
 
 Note: you need to run the complete evaluation to get more meaningful results
 (larger population size), the results may slightly differ depending on the
-generated population, but they should be in the same ballpark.
+generated population (for instance
+`petsymposium-artifact2024.1/250000_users_topics.csv.tar.gz` is one of the
+population we generated for our results).
 
 #### Experiment 4: Static Mapping Reclassification
 - Prerequisite: run experiment 1 (quick evaluation)
-- Time to execute: about 15 min (quick evaluation only)
+- Time to execute: about 15 min
 - Disk space: less than 3MB (negligible)
 - Result or claim: [Main Result 4: The ML model outputs topics in common with
   the ground
@@ -278,8 +297,10 @@ annotated by Google in the `output_web/static` folder.
 
 #### Experiment 5: Crafting Subdomains
 - Prerequisite: run experiment 1 (quick evaluation)
-- Time to execute: about 2 min (quick evaluation) | about 2h15 (complete evaluation)
-- Disk space: about 10MB (quick evaluation) | about 850MB (complete evaluation)
+- Time to execute: about 2 min (quick evaluation) | about 2h15 (complete
+evaluation)
+- Disk space: about 10MB (quick evaluation) | about 850MB (complete
+evaluation)
 - Result or claim: [Main Result 5: Publishers can influence the classification
   of their
   websites](#main-result-5-publishers-can-influence-the-classification-of-their-websites)
@@ -294,11 +315,11 @@ evaluation) websites = 35k (quick evalaution) /or/ 3.5M (complete evaluation)
 subdomains total.
 
 The script automatically detects if WordNet was classified during experiment 1
-(complete evaluation). If so, we can extract the list of top word for each topic,
-if not (quicker evaluation), we use the provided file
+(complete evaluation). If so, we can extract the list of top word for each
+topic, if not (quicker evaluation), we use the provided file
 `petsymposium-artifact2024.1/taxonomy.words`.
 
-Results: see folder `output/crafted_subdomains` for the results of the
+Results: see folder `output_web/crafted_subdomains` for the results of the
 classification of these crafted subdomain: `targeted_untargeted_stats.txt` and
 `targeted_untargeted_success.pdf`. You should get a simular figure to Figure 6
 from our paper (to replicate it, you need to run the complete evaluation).
@@ -347,6 +368,6 @@ with [Mozilla](https://www.usenix.org/conference/soups2020/presentation/bird)
 and [Google](https://dl.acm.org/doi/10.1145/3517745.3561418). Our approach not
 only does not require that researchers collect real browsing histories (which
 creates bias and ethical issues) but also enables reproducible methodologies and
-the generation of publicly sharable synthetic datasets. Thus, other
+the generation of publicly sharable synthetic datasets. As a result, other
 methodologies requiring the use of browsing history could benefit from adopting
 our approach. Please reach out if you have such use cases.

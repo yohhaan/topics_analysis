@@ -1,9 +1,8 @@
-import code
-import importlib
 import pandas as pd
 import simulator_library
-import sim_utils
 import numpy as np
+
+import sys
 
 
 def create_users(synthetic_users, nb_users):
@@ -118,56 +117,6 @@ class StableUser:
         )
 
 
-def archive_main():
-    """Archive of commands ran"""
-    ## ROC CURVE EXPERIMENT
-    filename_users = "output_web/simulator/synthetic/52k_users.csv"
-    roc_thresholds = [0, 1, 2, 5, 10, 20, 50, 100, 500, 1000]
-    roc_labels = ["0", "1", "2", "5", "10", "20", "50", "100", "500", "1k"]
-    # Load data
-    synthetic_topics = pd.read_csv(filename_users, sep="\t")
-    synthetic_users = synthetic_topics.to_numpy()
-    nb_users = len(synthetic_users)
-    users = create_users(synthetic_users, nb_users)
-    simulator_library.one_shot_denoise_roc_curve(roc_thresholds, roc_labels, users)
-
-    ## MULTI-SHOT EXPERIMENT (ONE SHOT is equal to epoch 0 observed only)
-    filename_users = "output_web/simulator/synthetic/250k_users.csv"
-    min_nb_domains_in_top_1m = 10
-    synthetic_topics = pd.read_csv(filename_users, sep="\t")
-    synthetic_users = synthetic_topics.to_numpy()
-    nb_users = len(synthetic_users)
-    nb_epochs_total = 30
-    users = create_users(synthetic_users, nb_users)
-    noisy_topics_list = sim_utils.output_noisy_topics_traffic(min_nb_domains_in_top_1m)
-
-    simulator_library.multi_shot_denoise_generate_exp_a(
-        users, noisy_topics_list, nb_epochs_total
-    )
-    simulator_library.multi_shot_denoise_generate_exp_b(
-        users, noisy_topics_list, nb_epochs_total
-    )
-    simulator_library.multi_shot_denoise_results_exp_all_epochs_plot(
-        users, nb_epochs_total
-    )
-
-    ## RE-IDENTIFICATION
-    simulator_library.reidentification_all_epochs(users, nb_epochs_total)
-
-    ## PLOT RESULTS PAPER
-    # complete/extracted manually with grep for now
-    results_dict = {}
-    results_dict["Accuracy"] = []
-    results_dict["Precision"] = []
-    results_dict["TPR"] = []
-    results_dict["FPR"] = []
-    median = []
-
-    simulator_library.plot_multi_shot_denoise(30, results_dict)
-    simulator_library.plot_cdf_size_reidentified_groups(249997)
-    simulator_library.plot_median_nb_genuine_retrieved(median)
-
-
 def gen_id(t1, t2, t3, t4, t5):
     topics = np.sort([t1, t2, t3, t4, t5])
     id = ""
@@ -178,8 +127,8 @@ def gen_id(t1, t2, t3, t4, t5):
 
 def extract_stats_synthetic_datasets():
     paths = [
-        "output_web/simulator/synthetic/52k_users.csv",
-        "output_web/simulator/synthetic/250k_users.csv",
+        "../output_web/simulator/52000_users/52000_users_domains.csv",
+        "../output_web/simulator/250000_users/250000_users_domains.csv",
     ]
 
     for path in paths:
@@ -199,8 +148,10 @@ def extract_stats_synthetic_datasets():
         df["id"] = df.apply(lambda x: gen_id(x.t1, x.t2, x.t3, x.t4, x.t5), axis=1)
         print("Nb unique profiles:")
         print(df["id"].nunique())
-
         print("====")
+
+
+#######
 
 
 def different_population_sizes(
@@ -213,7 +164,7 @@ def different_population_sizes(
     nb_users = len(synthetic_users)
     nb_epochs_total = 30
     users = create_users(synthetic_users, nb_users)
-    noisy_topics_list = sim_utils.output_noisy_topics_traffic(min_nb_domains_in_top_1m)
+    noisy_topics_list = output_noisy_topics_traffic(crux_path, min_nb_domains_in_top_1m)
 
     simulator_library.multi_shot_denoise_generate_exp_a(
         users, noisy_topics_list, nb_epochs_total
@@ -229,23 +180,83 @@ def different_population_sizes(
     simulator_library.reidentification_all_epochs(users, nb_epochs_total)
 
 
-def main():
-    # refer to archive_main() and corresponding functions mentioned there for
-    # the commands to run the analysis
-    # extract_stats_synthetic_datasets()
-
-    while True:
-        try:
-            pass
-            # reload library here
-            importlib.reload(simulator_library)
-        except Exception as e:
-            print("WARNING: EXCEPTION:", e)
-        # Interactive console (exit with `exit()`)
-        code.interact(local=dict(globals(), **locals()))
-
-    # iterate across epochs for results
-
-
 if __name__ == "__main__":
-    main()
+    if sys.argv[1] == "classifier":
+        if len(sys.argv) == 5:
+            crux_path = sys.argv[2]
+            users_topics_path = sys.argv[3]
+            output_folder = sys.argv[4]
+
+            # Thresholds and labels for ROC curve
+            roc_thresholds = [0, 1, 2, 5, 10, 20, 50, 100, 500, 1000]
+            roc_labels = ["0", "1", "2", "5", "10", "20", "50", "100", "500", "1k"]
+
+            # Load data
+            synthetic_topics = pd.read_csv(users_topics_path, sep="\t")
+            synthetic_users = synthetic_topics.to_numpy()
+            nb_users = len(synthetic_users)
+            users = create_users(synthetic_users, nb_users)
+            simulator_library.one_shot_denoise_roc_curve(
+                crux_path, output_folder, roc_thresholds, roc_labels, users
+            )
+        else:
+            raise ValueError("Incorrect number of arguments passed")
+
+    elif sys.argv[1] == "denoise_and_reidentify":
+        if len(sys.argv) == 5:
+            crux_path = sys.argv[2]
+            users_topics_path = sys.argv[3]
+            output_folder = sys.argv[4]
+
+            # Parameters for evaluation
+            min_nb_domains_in_top_1m = 10
+            nb_epochs_total = 30
+
+            synthetic_topics = pd.read_csv(users_topics_path, sep="\t")
+            synthetic_users = synthetic_topics.to_numpy()
+            nb_users = len(synthetic_users)
+
+            users = create_users(synthetic_users, nb_users)
+            noisy_topics_list = simulator_library.output_noisy_topics_traffic(
+                crux_path, min_nb_domains_in_top_1m
+            )
+
+            # Denoise
+            simulator_library.multi_shot_denoise_generate_exp_a(
+                users, noisy_topics_list, nb_epochs_total
+            )
+            simulator_library.multi_shot_denoise_generate_exp_b(
+                users, noisy_topics_list, nb_epochs_total
+            )
+            simulator_library.multi_shot_denoise_results_exp_all_epochs(
+                users, nb_epochs_total, output_folder
+            )
+
+            ## RE-IDENTIFICATION
+            simulator_library.reidentification_all_epochs(
+                users, nb_epochs_total, output_folder
+            )
+
+        else:
+            raise ValueError("Incorrect number of arguments passed")
+
+    elif sys.argv[1] == "plot":
+        if len(sys.argv) == 4:
+            output_folder = sys.argv[2]
+            nb_users = int(sys.argv[3])
+
+            simulator_library.plot_multi_shot_denoise(output_folder, 30)
+
+            simulator_library.plot_min_median_max_nb_genuine_retrieved(
+                output_folder, 30
+            )
+            epochs = [0, 1, 4, 9, 14, 19, 24, 29]
+            simulator_library.plot_cdf_size_reidentified_groups(
+                output_folder, epochs, nb_users
+            )
+
+        else:
+            raise ValueError("Incorrect number of arguments passed")
+
+    else:
+        raise ValueError("Wrong argument passed")
