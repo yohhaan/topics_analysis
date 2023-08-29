@@ -213,21 +213,21 @@ def compare_to_ground_truth(
     np.save(output_folder + "/" + filename + "_overlap.npy", overlap)
 
 
-def results_model_ground_truth(df_o, output_folder, filename):
+def results_model_ground_truth(df_static, output_folder, filename):
     cm = np.load(output_folder + "/" + filename + "_confusion_matrix.npy")
     dice = np.load(output_folder + "/" + filename + "_dice.npy").flatten()
     jaccard = np.load(output_folder + "/" + filename + "_jaccard.npy").flatten()
     overlap = np.load(output_folder + "/" + filename + "_overlap.npy").flatten()
 
     n = 350
-    N_domains = len(df_o)
+    N_domains = len(df_static)
     accuracy = np.trace(cm) / N_domains
     # Add missing topic_ids
-    df_o["topic_id"] = df_o["topic_id"].replace(-2, 0)
-    merged = df_o.merge(
+    df_static["topic_id"] = df_static["topic_id"].replace(-2, 0)
+    merged = df_static.merge(
         pd.DataFrame({"topic_id": np.arange(0, 350)}), how="right", on="topic_id"
     )
-    df_o["topic_id"] = df_o["topic_id"].replace(0, -2)
+    df_static["topic_id"] = df_static["topic_id"].replace(0, -2)
     # get number of domains for each topic
     weights = merged.groupby("topic_id")["domain"].nunique().to_numpy()
     topics_accuracy = np.zeros(n)

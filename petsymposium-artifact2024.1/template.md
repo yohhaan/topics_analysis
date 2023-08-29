@@ -199,17 +199,17 @@ evaluation of our artifact).
 
 Run `./experiment1.sh` to classify the following lists of domains and words from
 the English dictionary into their corresponding topics:
-
-- `override` (quick evaluation): domains from the override_list (Static mapping
-  provided by Google)
 - `crux` (quick evaluation): Top 1M most visited origins/domains from
   [CrUX](https://github.com/zakird/crux-top-lists)
 - `tranco` (complete evaluation): Top 1M most visited origins/domains from
   [Tranco](https://tranco-list.eu/)
 - `wordnet` (complete evaluation): English dictionary returned by WordNet
 
-Results: see the corresponding folder under `output_web/` for the classification
-(`csv` files), figures, and statistics.
+Results: see `output_web/crux`, `output_web/tranco`, and `output_web/wordnet`
+for the classification (`csv` files), figures, and statistics. This experiment
+also extracts some statistics about the static mapping annotated by Google in
+the `output_web/static` folder. The `cdf_histplot_domains_per_topic.pdf` figures
+correspond to Figures 3 (a), (b), and (c) from our paper.
 
 #### Experiment 2: Noise Removal
 - Prerequisite: run experiment 1 (quick evaluation)
@@ -235,7 +235,7 @@ from Figure 4 of our paper, see [Experiment 3: Collusion and Cross-site
 
 Note: results can slightly differ depending on the generated population (for
 instance `petsymposium-artifact2024.1/52000_users_topics.csv.tar.gz` is one of
-the population we generated for our results).
+the populations we generated for our results).
 
 #### Experiment 3: Collusion and Cross-site Tracking
 - Prerequisite: run experiment 1 (quick evaluation)
@@ -273,10 +273,9 @@ Note: you need to run the complete evaluation to get more meaningful results
 (larger population size), the results may slightly differ depending on the
 generated population (for instance
 `petsymposium-artifact2024.1/250000_users_topics.csv.tar.gz` is one of the
-population we generated for our results).
+populations we generated for our results).
 
 #### Experiment 4: Static Mapping Reclassification
-- Prerequisite: run experiment 1 (quick evaluation)
 - Time to execute: about 15 min
 - Disk space: less than 3MB (negligible)
 - Result or claim: [Main Result 4: The ML model outputs topics in common with
@@ -284,16 +283,15 @@ population we generated for our results).
   truth](#main-result-4-the-ml-model-outputs-topics-in-common-with-the-ground-truth)
 
 Run `./experiment4.sh` to compare the ML classification of the domains in the
-static mapping to the manual annotations from Google.
+static mapping to the manual annotations from Google. The script first
+classifies the domains from the static mapping provided by Google (override_list
+  classified into `output_web/override`).
 
-Results: see folder `output_web/static` for the results about the comparison for
-both the two filtering strategies discussed in the paper:
+Results: see folder `output_web/override` for the results about the comparison
+for both the two filtering strategies discussed in the paper:
 `same_nb_as_static_comparison_stats.txt` and
 `chrome_filtering_comparison_stats.txt`. They can directly be compared to the
 results in Table 4 of our paper.
-
-Note: this experiment also extracts some statistics about the static mapping
-annotated by Google in the `output_web/static` folder.
 
 #### Experiment 5: Crafting Subdomains
 - Prerequisite: run experiment 1 (quick evaluation)
@@ -310,8 +308,8 @@ triggering an untargeted or targeted classification. For that, we extract for
 each topic the word from WordNet classified with most confidence to that topic,
 and craft for each of the top most visited websites from CrUX all the
 corresponding subdomains quick evaluatiothat we classify with the Topics API.
-This results in 350 topics x 100 (quick evalaution) /or/ 10000 (complete
-evaluation) websites = 35k (quick evalaution) /or/ 3.5M (complete evaluation)
+This results in 350 topics x 100 (quick evaluation) /or/ 10000 (complete
+evaluation) websites = 35k (quick evaluation) /or/ 3.5M (complete evaluation)
 subdomains total.
 
 The script automatically detects if WordNet was classified during experiment 1

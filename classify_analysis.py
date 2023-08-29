@@ -28,6 +28,18 @@ if __name__ == "__main__":
         # Plot graphs in figs/ folder and extract stats
         analysis.graph_describe_all(df, output_folder)
 
+    elif sys.argv[1] == "extract_stats_static":
+        static_output_folder = sys.argv[2]
+
+        dependencies.load_all()
+
+        # Extract static mapping annotated by google
+        df_static = analysis.override_create_df()
+        # Plot and stats for static mapping
+        analysis.graph_describe_all(df_static, static_output_folder)
+        # Extract also stats about the taxonomy
+        analysis.taxonomy(static_output_folder)
+
     elif sys.argv[1] == "compare_override_to_static":
         # Pass as input the folder where the classification of override is
         # stored and where to save the graphs and stats for the static mapping
@@ -39,35 +51,39 @@ if __name__ == "__main__":
 
         # Extract static mapping annotated by google
         df_static = analysis.override_create_df()
-        # Plot and stats for static mapping
-        analysis.graph_describe_all(df_static, static_output_folder)
-        # Extract also stats about the taxonomy
-        analysis.taxonomy(static_output_folder)
 
         # Same top nb of topics as in static mapping
         df_override = analysis.read_classified_csv(
             override_output_folder + config.chrome_ml_model_file
         )
         analysis.compare_to_ground_truth(
-            df_static, df_override, static_output_folder, "same_nb_as_static", True
+            df_static, df_override, override_output_folder, "same_nb_as_static", True
         )
         analysis.results_model_ground_truth(
-            df_static, static_output_folder, "same_nb_as_static"
+            df_static, override_output_folder, "same_nb_as_static"
         )
 
         # Applying chrome filter
-        df_override_chrome = analysis.read_chrome_csv(
-            override_output_folder + config.chrome_file
-        )
+        # Check if filter was already applied during classification (i.e., if
+        # file already exists)
+        override_csv = override_output_folder + config.chrome_file
+        if not (os.path.isfile(override_csv)):
+            df_not_filtered = analysis.read_classified_csv(
+                override_output_folder + config.chrome_ml_model_file
+            )
+            df_override_chrome = analysis.chrome_filter(df_not_filtered, override_csv)
+        else:
+            df_override_chrome = analysis.read_chrome_csv(override_csv)
+
         analysis.compare_to_ground_truth(
             df_static,
             df_override_chrome,
-            static_output_folder,
+            override_output_folder,
             "chrome_filtering",
             False,
         )
         analysis.results_model_ground_truth(
-            df_static, static_output_folder, "chrome_filtering"
+            df_static, override_output_folder, "chrome_filtering"
         )
 
     elif sys.argv[1] == "compare_to_cloudflare":
@@ -83,9 +99,7 @@ if __name__ == "__main__":
         # Cloudflare comparison
         # Need manual mapping of topics
         if not (os.path.isfile(output_dict_path)):
-            analysis.parse_cloudflare_topics_mapping(
-                mapping_path, output_dict_path
-            )
+            analysis.parse_cloudflare_topics_mapping(mapping_path, output_dict_path)
 
         # compare to static mapping released by Google
         df_static = analysis.override_create_df()
@@ -104,9 +118,7 @@ if __name__ == "__main__":
             crux_dependencies_path,
             output_dict_path,
         )
-        analysis.describe_results_cloudflare_comparison(
-            output_folder, filename_static
-        )
+        analysis.describe_results_cloudflare_comparison(output_folder, filename_static)
 
         # Compare to crux classification
         filename_crux = "1M"
