@@ -13,7 +13,7 @@ personalized advertising. Find more details about our analysis in our paper
 Preserving)](https://arxiv.org/abs/2306.03825):
 
 ```bibtex
-@inproceedings{topicsweb23_beugin,
+@inproceedings{topicsweb24_beugin,
       title={Interest-disclosing Mechanisms for Advertising are Privacy-Exposing (not Preserving)},
       author={Yohan Beugin and Patrick McDaniel},
       booktitle={Proceedings on {Privacy} {Enhancing} {Technologies} {Symposium} ({PETS})},
