@@ -28,6 +28,10 @@ def output_noisy_topics_traffic(crux_path, min_nb_domains_in_top_1m):
 
 def savefig(path, size=[4, 3]):
     import os
+    import matplotlib
+
+    matplotlib.rcParams["pdf.fonttype"] = 42
+    matplotlib.rcParams["ps.fonttype"] = 42
 
     os.makedirs(os.path.dirname(path), exist_ok=True)
     plt.gcf().set_size_inches(*size)
@@ -701,13 +705,13 @@ def plot_min_median_max_nb_genuine_retrieved(output_folder, nb_epochs_total):
     data = pd.DataFrame(
         {
             "Epochs": epochs,
-            "min": nb_top5_recovered_min,
-            "median": nb_top5_recovered_median,
-            "max": nb_top5_recovered_max,
+            "Min": nb_top5_recovered_min,
+            "Median": nb_top5_recovered_median,
+            "Max": nb_top5_recovered_max,
         }
     )
     plt.clf()
-    plot = sns.lineplot(data=data[["min", "median", "max"]], markers=True)
+    plot = sns.lineplot(data=data[["Min", "Median", "Max"]], markers=True)
     plot.set(xlabel="Epochs")
     plot.set(ylabel="Size of top 5 retrieved")
     savefig(output_folder + "/denoise_nb_top5_recovered.pdf")

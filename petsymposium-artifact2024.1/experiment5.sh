@@ -12,22 +12,25 @@ fi
 
 # Move to root of git repository
 cd ..
-#Note: need to delete and recreate the folder between runs of experiment5 to
-#take into account the possibility to switch from quick to long evaluation
-rm -r output_web/crafted_subdomains
-mkdir -p output_web/crafted_subdomains
+
+output_folder=output_web/crafted_subdomains_${top}
 
 # Check if WordNet was classified during experiment 1, if so, extract word
 # classified with highest confideence for each topic. If not we use the provided
 # file for quick evaluation
 wordnet_path=output_web/wordnet/chrome_ml_model.csv
-word_output_path=output_web/crafted_subdomains/taxonomy.words
+word_output_path=$output_folder/taxonomy.words
 
-if [ ! -f $wordnet_path ]
+mkdir -p $output_folder
+
+if [ ! -f $word_output_path ]
 then
-    cp petsymposium-artifact2024.1/taxonomy.words $word_output_path
-else
-    python3 subdomains.py extract $wordnet_path $word_output_path
+    if [ ! -f $wordnet_path ]
+    then
+        cp petsymposium-artifact2024.1/taxonomy.words $word_output_path
+    else
+        python3 subdomains.py extract $wordnet_path $word_output_path
+    fi
 fi
 
 ./subdomains_crafting.sh $top

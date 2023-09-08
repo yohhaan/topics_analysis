@@ -7,6 +7,34 @@ Artifacts HotCRP Id: **#10**
 
 Requested Badge: **Reproducible**
 
+- [Artifact Appendix](#artifact-appendix)
+  - [Description](#description)
+    - [Security/Privacy Issues and Ethical Concerns](#securityprivacy-issues-and-ethical-concerns)
+  - [Basic Requirements](#basic-requirements)
+    - [Hardware Requirements](#hardware-requirements)
+    - [Software Requirements](#software-requirements)
+    - [Estimated Time and Storage Consumption](#estimated-time-and-storage-consumption)
+  - [Environment](#environment)
+    - [Accessibility](#accessibility)
+    - [Set up the environment](#set-up-the-environment)
+    - [Testing the Environment](#testing-the-environment)
+  - [Artifact Evaluation](#artifact-evaluation)
+    - [Main Results and Claims](#main-results-and-claims)
+      - [Main Result 1: The distribution of observed topics on the web is skewed](#main-result-1-the-distribution-of-observed-topics-on-the-web-is-skewed)
+      - [Main Result 2: Noisy topics can be removed by advertisers](#main-result-2-noisy-topics-can-be-removed-by-advertisers)
+      - [Main Result 3: Users can be re-identified across websites](#main-result-3-users-can-be-re-identified-across-websites)
+      - [Main Result 4: The ML model outputs topics in common with the ground truth](#main-result-4-the-ml-model-outputs-topics-in-common-with-the-ground-truth)
+      - [Main Result 5: Publishers can influence the classification of their websites](#main-result-5-publishers-can-influence-the-classification-of-their-websites)
+    - [Experiments](#experiments)
+      - [Experiment 1: Domains classification by the Topics API](#experiment-1-domains-classification-by-the-topics-api)
+      - [Experiment 2: Noise Removal](#experiment-2-noise-removal)
+      - [Experiment 3: Collusion and Cross-site Tracking](#experiment-3-collusion-and-cross-site-tracking)
+      - [Experiment 4: Static Mapping Reclassification](#experiment-4-static-mapping-reclassification)
+      - [Experiment 5: Crafting Subdomains](#experiment-5-crafting-subdomains)
+  - [Limitations](#limitations)
+  - [Notes on Reusability](#notes-on-reusability)
+
+
 ## Description
 
 This artifact contains all of our analysis code used in our paper to evaluate
@@ -145,7 +173,7 @@ petsymposium.org        238     0.4484950006008148
 - The classification of top lists of domains show that the distribution of
 topics is very non-uniform: some topics are observed on a lot of websites while
 some can be never observed at all.
-- See section 4.2 and paragraph "Topics Distribution as a Prior." in our paper
+- See section 4.4 and paragraph "Topics Distribution as a Prior." in our paper
   (Figure 3 (a), (b), and (c)).
 - See [Experiment 1: Domains classification by the Topics
   API](#experiment-1-domains-classification-by-the-topics-api).
@@ -155,8 +183,8 @@ some can be never observed at all.
   top lists as noisy.
 - Advertisers who observe across time topics returned by each user can identify
   the ones that are more likely to be genuine than noisy.
-- See section 4.2 "No Collusion and Noise Removal" and paragraphs "One-shot
-  Scenario." and "Multi-shot Scenario." (Table 3 and Figure 4 (a), (b), and
+- See section 4.4 "No Collusion and Noise Removal" and paragraphs "One-shot
+  Scenario." and "Multi-shot Scenario." (Table 4 and Figure 4 (a), (b), and
   (c)).
 - See [Experiment 2: Noise Removal](#experiment-2-noise-removal).
 - See [Experiment 3: Collusion and Cross-site
@@ -166,7 +194,7 @@ some can be never observed at all.
 - Advertisers can uniquely and with a higher chance than random re-identify
   across websites a portion of the users with stable interests.
 - Across time, advertisers re-identify a higher portion of the simulated users.
-- See section 4.3 "Collusion and Cross-site Tracking" (Figure 5).
+- See section 4.5 "Collusion and Cross-site Tracking" (Figure 5).
 - See [Experiment 3: Collusion and Cross-site
   Tracking](#experiment-3-collusion-and-cross-site-tracking).
 
@@ -229,7 +257,7 @@ artifact. See instructions provided [here](../simulator/order_crux.md) to
 reorder the CrUX top-list yourself (it takes several hours).
 
 Results: see `output_web/simulator/classifier/` for results about the classifier
-(Table 3 of our paper corresponds to `denoise_one_shot.stats`). To obtain graphs
+(Table 4 of our paper corresponds to `denoise_one_shot.stats`). To obtain graphs
 from Figure 4 of our paper, see [Experiment 3: Collusion and Cross-site
   Tracking](#experiment-3-collusion-and-cross-site-tracking).
 
@@ -241,7 +269,7 @@ the populations we generated for our results).
 - Prerequisite: run experiment 1 (quick evaluation)
 - Optional prerequisite: re-order CrUX which takes several hours (optional)
 - Time to execute: about 15 min (quick evaluation) | about 6h15min (complete
-evaluation
+evaluation)
 - Disk space: about 60MB (quick evaluation) | about 110MB (complete
 evaluation)
 - Result or claim: [Main Result 2: Noisy topics can be removed by
@@ -267,7 +295,7 @@ population size you simulated for results (`denoise_multi_shot.stats` and
 `cdf_reidentification.stats`). Figures 4 of paper correspond to
 `denoise_accuracy_precision.pdf`, `denoise_tpr_fpr.pdf`,
 `denoise_nb_top5_recovered`. Figure 5 of paper corresponds to
-`cdf_size_groups/pdf`
+`cdf_size_groups.pdf`
 
 Note: you need to run the complete evaluation to get more meaningful results
 (larger population size), the results may slightly differ depending on the
@@ -291,7 +319,7 @@ Results: see folder `output_web/override` for the results about the comparison
 for both the two filtering strategies discussed in the paper:
 `same_nb_as_static_comparison_stats.txt` and
 `chrome_filtering_comparison_stats.txt`. They can directly be compared to the
-results in Table 4 of our paper.
+results in Table 5 of our paper.
 
 #### Experiment 5: Crafting Subdomains
 - Prerequisite: run experiment 1 (quick evaluation)
@@ -317,10 +345,11 @@ The script automatically detects if WordNet was classified during experiment 1
 topic, if not (quicker evaluation), we use the provided file
 `petsymposium-artifact2024.1/taxonomy.words`.
 
-Results: see folder `output_web/crafted_subdomains` for the results of the
-classification of these crafted subdomain: `targeted_untargeted_stats.txt` and
-`targeted_untargeted_success.pdf`. You should get a simular figure to Figure 6
-from our paper (to replicate it, you need to run the complete evaluation).
+Results: see folder `output_web/crafted_subdomains_{100/or/10000}` for the
+results of the classification of these crafted subdomain:
+`targeted_untargeted_stats.txt` and `targeted_untargeted_success.pdf`. You
+should get a simular figure to Figure 6 from our paper (to replicate it, you
+need to run the complete evaluation).
 
 ## Limitations
 
@@ -341,7 +370,7 @@ Issues and Ethical Concerns](#securityprivacy-issues-and-ethical-concerns)) and
 is quite a time-consuming process. For completeness, the code is provided
 [here](../manual_verification/).
 
-Finally, the categorization of the top 1M websites (section 5.2 and Table 5 in
+Finally, the categorization of the top 1M websites (section 5.2 and Table 6 in
 the paper) through the Cloudflare Domain Intelligence API required us several
 days to completely process. Given that only a very limited number of requests
 can normally be issued per month to this specific API, and that we were able to

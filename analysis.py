@@ -15,6 +15,11 @@ sns.set_theme(style="darkgrid")
 def savefig(path, size=[4, 3]):
     import os
 
+    import matplotlib
+
+    matplotlib.rcParams["pdf.fonttype"] = 42
+    matplotlib.rcParams["ps.fonttype"] = 42
+
     os.makedirs(os.path.dirname(path), exist_ok=True)
     plt.gcf().set_size_inches(*size)
     plt.tight_layout(

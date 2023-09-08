@@ -37,10 +37,9 @@ if [ ! -f $users_topics_path ]
 then
     # Generate users
     ./generate_users.sh $nb_users
+    # Simulate epochs - denoise and re-identify
+    python3 simulator.py denoise_and_reidentify $crux_classified_path $users_topics_path $output_folder
 fi
-
-# Simulate epochs - denoise and re-identify
-python3 simulator.py denoise_and_reidentify $crux_classified_path $users_topics_path $output_folder
 
 # Plot results
 python3 simulator.py plot $output_folder $nb_users
