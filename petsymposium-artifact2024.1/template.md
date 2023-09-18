@@ -68,7 +68,7 @@ perform it.
 
 ### Hardware Requirements
 
-- No specific hardware required.
+- No specific hardware required except for an x86 machine.
 - But a machine with at least 8 cores/16 threads and 64GB of RAM is recommended
   to run things quicker.
 
@@ -160,9 +160,9 @@ github.com      139     1
 github.com      140     1
 github.com      215     1
 github.com      225     1
-privacysandbox.com      103     0.1374019831418991
-petsymposium.org        236     0.5649784803390503
-petsymposium.org        238     0.4484950006008148
+privacysandbox.com      103     0.13740....
+petsymposium.org        236     0.56497....
+petsymposium.org        238     0.44849....
 ```
 
 ## Artifact Evaluation
