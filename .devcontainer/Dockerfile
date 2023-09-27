@@ -16,7 +16,7 @@ RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
     update-locale LANG=en_US.UTF-8
 ENV LANG en_US.UTF-8
 RUN pip3 install --upgrade pip && \
-    pip3 install tflite-support-nightly pandas gdown matplotlib numpy seaborn nltk jinja2 black requests gensim beautifulsoup4 scipy
+    pip3 install tflite-support==0.4.3 pandas gdown matplotlib numpy seaborn nltk jinja2 black requests gensim beautifulsoup4 scipy
 RUN addgroup --gid 1000 vscode
 RUN adduser --disabled-password --gecos "" --uid 1000 --gid 1000 vscode
 ENV HOME /home/vscode
