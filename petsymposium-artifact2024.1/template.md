@@ -68,7 +68,7 @@ perform it.
 
 ### Hardware Requirements
 
-- No specific hardware required except for an x86 machine.
+- No specific hardware required.
 - But a machine with at least 8 cores/16 threads and 64GB of RAM is recommended
   to run things quicker.
 
