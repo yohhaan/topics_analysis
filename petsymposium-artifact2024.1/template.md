@@ -42,7 +42,7 @@ the privacy and utility objectives of the Topics API for the Web.
 
 Our artifact allows to:
 - Classify domains into topics with the Topics API.
-- Generate arbitrarly large populations of synthetic users.
+- Generate arbitrarily large populations of synthetic users.
 - Simulate the Topics API results observed by advertisers
 - Evaluate if the noisy topics returned by the API can be flagged and discarded.
 - Evaluate if users can be re-identified across websites and epochs.
@@ -201,7 +201,7 @@ some can be never observed at all.
 #### Main Result 4: The ML model outputs topics in common with the ground truth
 - The Topics model outputs at least one topic in common with the ground truth on
   65% of the domains from the static mapping.
-- See section 5.1 "Static Mapping Reclassification".
+- See section 5.1 "Static Mapping Reclassification" (Table 5).
 - See [Experiment 4: Static Mapping
   Reclassification](#experiment-4-static-mapping-reclassification).
 
@@ -316,7 +316,7 @@ classifies the domains from the static mapping provided by Google (override_list
   classified into `output_web/override`).
 
 Results: see folder `output_web/override` for the results about the comparison
-for both the two filtering strategies discussed in the paper:
+for the two filtering strategies discussed in the paper:
 `same_nb_as_static_comparison_stats.txt` and
 `chrome_filtering_comparison_stats.txt`. They can directly be compared to the
 results in Table 5 of our paper.
@@ -335,10 +335,9 @@ Run `./experiment5.sh` to craft subdomains and evaluate the possibility of
 triggering an untargeted or targeted classification. For that, we extract for
 each topic the word from WordNet classified with most confidence to that topic,
 and craft for each of the top most visited websites from CrUX all the
-corresponding subdomains quick evaluatiothat we classify with the Topics API.
-This results in 350 topics x 100 (quick evaluation) /or/ 10000 (complete
-evaluation) websites = 35k (quick evaluation) /or/ 3.5M (complete evaluation)
-subdomains total.
+corresponding subdomains that we classify with the Topics API. This results in
+350 topics x 100 (quick evaluation) /or/ 10000 (complete evaluation) websites =
+35k (quick evaluation) /or/ 3.5M (complete evaluation) subdomains total.
 
 The script automatically detects if WordNet was classified during experiment 1
 (complete evaluation). If so, we can extract the list of top word for each
@@ -348,7 +347,7 @@ topic, if not (quicker evaluation), we use the provided file
 Results: see folder `output_web/crafted_subdomains_{100/or/10000}` for the
 results of the classification of these crafted subdomain:
 `targeted_untargeted_stats.txt` and `targeted_untargeted_success.pdf`. You
-should get a simular figure to Figure 6 from our paper (to replicate it, you
+should get a similar figure to Figure 6 from our paper (to replicate it, you
 need to run the complete evaluation).
 
 ## Limitations
@@ -395,6 +394,6 @@ with [Mozilla](https://www.usenix.org/conference/soups2020/presentation/bird)
 and [Google](https://dl.acm.org/doi/10.1145/3517745.3561418). Our approach not
 only does not require that researchers collect real browsing histories (which
 creates bias and ethical issues) but also enables reproducible methodologies and
-the generation of publicly sharable synthetic datasets. As a result, other
+the generation of publicly shareable synthetic datasets. As a result, other
 methodologies requiring the use of browsing history could benefit from adopting
 our approach. Please reach out if you have such use cases.

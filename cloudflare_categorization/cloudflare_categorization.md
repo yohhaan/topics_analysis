@@ -19,7 +19,7 @@ query the Domain Intelligence API (rate limited at about 100 monthly requests).
   explained in the paper. We release our manual mapping in the following file
   `cloudflare_categories_manual_mapping_topics.json`.
 - Finally, compare Topics classification to Cloudflare categorization by running
-  `./compare_to_cloudflare_sategorization.sh`. Results are output in the
+  `./compare_to_cloudflare_categorization.sh`. Results are output in the
   following files `../output_web/cloudflare/stats_static.txt` for comparison on
   domains from the static mapping and `../output_web/cloudflare/stats_1M.txt`
   for comparison on CrUX.
