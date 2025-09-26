@@ -1,0 +1,13 @@
+beautifulsoup4
+gdown
+gensim
+jinja2
+matplotlib>=3.10.5
+nltk
+numpy>=2.3.2
+pandas>=2.3.1
+pyarrow>=21.0.0
+requests
+scipy
+seaborn>=0.13.2
+tflite-support>=0.4.4
