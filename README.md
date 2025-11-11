@@ -1,4 +1,5 @@
 # Topics Analysis: Privacy and Utility Goals
+[![DOI](https://zenodo.org/badge/650219863.svg)](https://doi.org/10.5281/zenodo.17583710)
 
 This repository contains the source code used in our privacy and utility analysis of the Topics API for the Web from the [Privacy Sandbox](https://privacysandbox.com/).
 

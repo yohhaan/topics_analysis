@@ -1,0 +1,50 @@
+cff-version: 1.2.0
+title: Topics API Analysis - PETS 2024
+message: "If you use this software, please cite both the associated paper (see preferred-citation) and the software itself."
+type: software
+authors:
+  - given-names: Yohan
+    family-names: Beugin
+    affiliation: University of Wisconsin–Madison
+    orcid: https://orcid.org/0000-0003-0991-7926
+license: "GPL-3.0-or-later"
+version: petsymposium-artifact2024.1
+date-released: "2023-06-06"
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.17583710
+    description: "The concept DOI that represent all versions and will always resolve to the latest one"
+  - type: doi
+    value: 10.5281/zenodo.17583711
+    description: "The versioned DOI for the version petsymposium-artifact2024.1 of the classifier"
+repository-code: https://github.com/yohhaan/topics_classifier
+url: https://privacysandstorm.github.io
+abstract: This repository reproduces Google's implementations of the Topics API for the Web and for Android.
+preferred-citation:
+  title: Interest-disclosing Mechanisms for Advertising are Privacy-Exposing (not Preserving)
+  type: article
+  authors:
+    - given-names: Yohan
+      family-names: Beugin
+      affiliation: University of Wisconsin–Madison
+      orcid: https://orcid.org/0000-0003-0991-7926
+    - given-names: Patrick
+      family-names: McDaniel
+      affiliation: University of Wisconsin–Madison
+      orcid: https://orcid.org/0000-0003-2091-7484
+  journal: Proceedings on Privacy Enhancing Technologies Symposium
+  conference:
+    name: 24th Privacy Enhancing Technologies Symposium (PETS 2024)
+    date-start: "2024-07-15"
+    date-end: "2024-07-20"
+    city: Bristol
+    country: GB
+  year: 2024
+  month: 7
+  doi: https://doi.org/10.56553/popets-2024-0004
+keywords:
+  - Computer Science
+  - Privacy Sandbox
+  - Advertising
+  - Topics API
+  - Third-party Cookies
